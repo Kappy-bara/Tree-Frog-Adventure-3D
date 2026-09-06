@@ -1,5 +1,6 @@
 using System.Collections;
 using TMPro;
+using TreeFrogAdventure.Menu;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
@@ -182,14 +183,17 @@ namespace TreeFrogAdventure.Player
         {
             IsDead = false;
             Time.timeScale = 1f;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            // Not GetActiveScene(): under additive level loading the active
+            // scene is the shared biome environment, so reloading it alone
+            // would drop the player and the rest of the gameplay layer.
+            LevelLoader.ReloadCurrentLevel();
         }
 
         private void OnMainMenuButton()
         {
             IsDead = false;
             Time.timeScale = 1f;
-            SceneManager.LoadScene("MainMenu");
+            LevelLoader.LoadMainMenu();
         }
 
         private void EnsureEventSystem()

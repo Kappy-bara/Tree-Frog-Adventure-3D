@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace TreeFrogAdventure.Menu
 {
@@ -24,8 +23,9 @@ namespace TreeFrogAdventure.Menu
 
         private void LoadLevel(int levelNumber)
         {
-            if (!LevelProgress.IsLevelUnlocked(levelNumber)) return;
-            SceneManager.LoadScene(LevelProgress.GetSceneName(levelNumber));
+            // LevelLoader pairs the shared biome environment with this level's
+            // own gameplay scene; it also re-checks the unlock itself.
+            LevelLoader.LoadLevel(levelNumber);
         }
     }
 }

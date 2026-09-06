@@ -116,7 +116,7 @@ namespace TreeFrogAdventure.Menu
             // ownership of cursor state for its own scene on Start().
             IsPaused = false;
             Time.timeScale = 1f;
-            SceneManager.LoadScene("MainMenu");
+            LevelLoader.LoadMainMenu();
         }
 
         private void OnQuitButton()

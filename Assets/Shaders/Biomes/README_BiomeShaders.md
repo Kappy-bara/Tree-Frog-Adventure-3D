@@ -37,10 +37,12 @@ were left untouched.
 `Level_1_Forest` — for example after you add gameplay to level 1. It overwrites them,
 so put biome-specific level design in *other* scenes, or re-apply it after a rebuild.
 
-> ⚠️ Re-running `Tools > Tree Frog > Build Main Menu Scene` will **drop these three
-> scenes from Build Settings** — `MainMenuSceneBuilder.UpdateBuildSettings` rebuilds
-> the list from only `MainMenu.unity` and `Level_1_Forest.unity`. Re-run
-> `Build Biome Scenes` afterwards, or widen that filter.
+> **Correction to an earlier version of this file:** re-running
+> `Tools > Tree Frog > Build Main Menu Scene` does **not** drop other scenes from
+> Build Settings. `MainMenuSceneBuilder.UpdateBuildSettings` keeps every other
+> entry and just re-adds `MainMenu.unity` and `Level_1_Forest.unity` at the front.
+> The only wrinkle is that it re-adds `Level_1_Forest.unity` unconditionally, so if
+> you later delete that scene you will get a stale Build Settings entry to remove.
 
 The rest of this document explains how the pieces work, and how to do it by hand if
 you want a fourth variant or a different look. A biome is 50% surface shading and 50%
@@ -49,34 +51,49 @@ colours.
 
 ---
 
+## 1a. Level structure (additive split)
+
+The three scenes above are now **sources**, not the shipping levels. Running
+`Tools > Tree Frog > Build Level Structure` carves each biome scene into:
+
+- `Assets/Scenes/Environments/Env_<Biome>.unity` — the 34 MB environment, shared by
+  all 5 levels of that world
+- `Assets/Scenes/Levels/Level_01..20.unity` — a few KB each: player, camera, UI,
+  waypoints, walls, puzzles
+
+At runtime `LevelLoader` loads the **environment as the primary scene** and the level
+scene **additively** on top. That order is deliberate: fog, ambient, skybox and the
+baked occlusion data all come from the *active* scene, so the biome look keeps working
+with no extra code.
+
+Fix a rock in `Env_MistySwamp` once and all five swamp levels get it.
+
+The builder never overwrites a level scene that already exists, so it is safe to
+re-run after you have started designing.
+
+---
+
 ## 1b. Making the menu actually load them
 
-The scenes exist and build, but the level select cannot reach them yet.
-`LevelProgress.GetSceneName()` returns `World{n}_Level{m}` for every level past 1
-(`Assets/Scripts/Menu/LevelProgress.cs:48-54`), so level 6 asks for `World2_Level1`,
-which does not exist.
+This is now wired. `LevelProgress` maps level → biome environment scene and level →
+gameplay scene, and every scene load in the project goes through `LevelLoader`:
 
-The smallest change that makes levels 6 / 11 / 16 load:
+| Script | Role |
+|---|---|
+| `LevelProgress.GetEnvironmentScene(n)` | `Env_CanopyHeights` for levels 6–10, etc. |
+| `LevelProgress.GetLevelScene(n)` | `Level_07` |
+| `LevelLoader.LoadLevel(n)` | environment primary + gameplay additive |
+| `LevelLoader.ReloadCurrentLevel()` | used by the death screen's Restart |
 
-```csharp
-public static string GetSceneName(int levelNumber)
-{
-    switch (levelNumber)
-    {
-        case 1:  return "Level_1_Forest";
-        case 6:  return "Level_6_CanopyHeights";
-        case 11: return "Level_11_MistySwamp";
-        case 16: return "Level_16_VolcanicHighlands";
-    }
-    var (world, levelInWorld) = GetWorldAndLevel(levelNumber);
-    return $"World{world}_Level{levelInWorld}";
-}
-```
+`TotalWorlds` is now **4** (20 levels). You said you would do that yourself — I had to
+change it because the biome→world mapping depends on it, so it is done. What is still
+yours: **re-run `Tools > Tree Frog > Build Main Menu Scene`**, because the 25 buttons in
+`MainMenu.unity` are hard-serialised and the constant alone will not change the menu.
 
-(Separately, for 20 levels: set `TotalWorlds = 4` at `LevelProgress.cs:10`, then
-re-run `Tools > Tree Frog > Build Main Menu Scene` — the 25 buttons in `MainMenu.unity`
-are hard-serialised, so the constant alone will not change the menu. Then re-run
-`Build Biome Scenes` to restore Build Settings, per the warning above.)
+One subtlety worth knowing: under additive loading the *active* scene is the
+environment, so `SceneManager.GetActiveScene().name` is **not** the level name.
+`PlayerHealth`'s restart button used to rely on that and would have reloaded the world
+without the player; it now calls `LevelLoader.ReloadCurrentLevel()`.
 
 ---
 
