@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: MS_Skybox
+  m_Shader: {fileID: 4800000, guid: b10e0000000000000000000000000007, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _ZenithPower: 1.3
+    - _GroundPower: 1.1
+    - _Exposure: 0.85
+    - _HorizonGlowStrength: 0.5
+    - _HorizonBandFalloff: 9.0
+    - _SunSize: 0.02
+    - _SunIntensity: 0.0
+    - _SunHaloPower: 12.0
+    - _SunHaloStrength: 0.45
+    - _CloudStrength: 0.9
+    - _CloudScale: 1.8
+    - _CloudSpeed: 0.012
+    - _CloudCoverage: 0.25
+    - _CloudSoftness: 0.5
+    - _CloudWarp: 1.1
+    - _CloudHorizonFade: 0.06
+    - _CloudHeightBias: 0.12
+    - _StarStrength: 0.0
+    - _StarScale: 90.0
+    - _StarDensity: 0.985
+    - _StarTwinkle: 0.5
+    m_Colors:
+    - _ZenithColor: {r: 0.3, g: 0.34, b: 0.3, a: 1}
+    - _HorizonColor: {r: 0.56, g: 0.58, b: 0.5, a: 1}
+    - _GroundColor: {r: 0.2, g: 0.21, b: 0.17, a: 1}
+    - _HorizonGlowColor: {r: 0.52, g: 0.54, b: 0.44, a: 1}
+    - _SunColor: {r: 0.9, g: 0.92, b: 0.8, a: 1}
+    - _SunDirOverride: {r: 0.0, g: 1.0, b: 0.0, a: 0.0}
+    - _CloudColor: {r: 0.62, g: 0.64, b: 0.58, a: 1}
+    - _CloudShadowColor: {r: 0.34, g: 0.36, b: 0.32, a: 1}
+    - _CloudDirection: {r: 1.0, g: 0.3, b: 0.0, a: 0.0}
+    - _StarColor: {r: 1, g: 0.95, b: 0.9, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -1,0 +1,470 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.3/staging' branch; Version is '6000.3.10f1 (e35f0c77bd8e) revision 14901004'; Using compiler version '194234433'; Build Type 'Release'
+[Licensing::IpcConnector] Channel LicenseClient-jnana doesn't exist
+OS: 'Windows 11  (10.0.26200) CoreSingleLanguage' Language: 'en' Physical Memory: 16077 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-06-25T11:55:36Z
+[Licensing::Module] Successfully launched the LicensingClient (PId: 2620)
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Unity.exe
+-quit
+-batchmode
+-projectPath
+e:\LAPTOP\Unity\Tree Frog Adventure 3D
+-executeMethod
+TreeFrogAdventure.EditorTools.GameSetupBuilder.BuildFullGame
+-logFile
+build_log_prefabs.txt
+Successfully changed project path to: e:\LAPTOP\Unity\Tree Frog Adventure 3D
+E:/LAPTOP/Unity/Tree Frog Adventure 3D
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+Player connection [3828]  Target information:
+
+Player connection [3828]  * "[IP] 192.168.31.233 [Port] 55504 [Flags] 2 [Guid] 452792078 [EditorId] 452792078 [Version] 1048832 [Id] WindowsEditor(7,JD) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [3828] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [3828] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-1712" after 0.6 seconds.
+[Licensing::Module] Licensing is not yet initialized.
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-jnana" at "2026-06-25T11:55:46.4716826Z"
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.17.4+4293ba1
+  Session Id:              da091fea785641b5905178bcfc280e95
+  Correlation Id:          24aa0844c4490e3714c652a1b99ca775
+  External correlation Id: 3958940702426554402
+  Machine Id:              FvpuTzACgmEF9G4myCvau/hLO00=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-jnana" (connect: 9.90s, validation: 0.59s, handshake: 4.27s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-jnana-notifications" at "2026-06-25T11:55:51.329989Z"
+[Licensing::Module] Connected to LicensingClient (PId: 2620, launch time: 0.09, total connection time: 14.76s)
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: 13469480692097-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.02
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 14.92s
+[Licensing::Module] Licensing is initialized (took 13.42s).
+[Licensing::Client] Successfully resolved entitlement details
+Library Redirect Path: Library/
+Default GameObject Tag: Player already registered
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Refreshing native plugins compatible for Editor in 0.73 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 6000.3.10f1 (e35f0c77bd8e)
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.3.10f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path E:/LAPTOP/Unity/Tree Frog Adventure 3D/Assets
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.1]
+    Renderer: NVIDIA GeForce RTX 4050 Laptop GPU (ID=0x28a1)
+    Vendor:   NVIDIA
+    VRAM:     5920 MB
+    Driver:   32.0.15.9227
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.3.10f1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.3.10f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.3.10f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56712
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.3.10f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.005633 seconds.
+- Loaded All Assemblies, in  1.063 seconds
+Native extension for WindowsStandalone target not found
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.049 seconds
+Domain Reload Profiling: 2108ms
+	BeginReloadAssembly (389ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (0ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (16ms)
+	RebuildCommonClasses (113ms)
+	RebuildNativeTypeToScriptingClass (32ms)
+	initialDomainReloadingComplete (133ms)
+	LoadAllAssembliesAndSetupDomain (391ms)
+		LoadAssemblies (368ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (383ms)
+			TypeCache.Refresh (378ms)
+				TypeCache.ScanAssembly (353ms)
+			BuildScriptInfoCaches (1ms)
+			ResolveRequiredComponents (2ms)
+	FinalizeReload (1049ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (964ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (111ms)
+			SetLoadedEditorAssemblies (8ms)
+			BeforeProcessingInitializeOnLoad (207ms)
+			ProcessInitializeOnLoadAttributes (423ms)
+			ProcessInitializeOnLoadMethodAttributes (214ms)
+			AfterProcessingInitializeOnLoad (0ms)
+			EditorAssembliesLoaded (1ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (0ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+Package Manager log level set to [2]
+[Package Manager] Restoring resolved packages state from cache
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Registered 65 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.ai.assistant@2.12.0-pre.2 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.ai.assistant@d9bb465c57d1)
+    com.unity.ai.inference@2.6.1 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.ai.inference@9a123aee5df7)
+    com.unity.ai.navigation@2.0.10 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.ai.navigation@c33a115e9883)
+    com.unity.cinemachine@3.1.3 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.cinemachine@624f919d8cdd)
+    com.unity.collab-proxy@2.11.3 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.collab-proxy@e566cd3e7623)
+    com.unity.ide.rider@3.0.39 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.ide.rider@4504839d03f7)
+    com.unity.ide.visualstudio@2.0.26 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.ide.visualstudio@a99d56dec63f)
+    com.unity.inputsystem@1.18.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.inputsystem@57d0e36f6123)
+    com.unity.timeline@1.8.10 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.timeline@7f8b2fb101b6)
+    com.unity.visualscripting@1.9.9 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.visualscripting@191c0d7e3b69)
+    com.unity.splines@2.8.3 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.splines@56b2023b4b9f)
+    com.unity.burst@1.8.28 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.burst@07790c2d06d9)
+    com.unity.dt.app-ui@2.1.1 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.dt.app-ui@8ac7e730dd5d)
+    com.unity.collections@2.6.2 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.collections@aea9d3bd5e19)
+    com.unity.nuget.newtonsoft-json@3.2.2 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.nuget.newtonsoft-json@4dfd81071c64)
+    com.unity.mathematics@1.3.3 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.mathematics@19a9377c4ffa)
+    com.unity.nuget.mono-cecil@1.11.6 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.nuget.mono-cecil@ecb9724e46ff)
+    com.unity.searcher@4.9.4 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.searcher@d45a78918735)
+    com.unity.settings-manager@2.1.1 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.settings-manager@0b8638c5ce86)
+    com.unity.test-framework.performance@3.2.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.test-framework.performance@0840f58e4562)
+  Built-in packages:
+    com.unity.multiplayer.center@1.0.1 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.multiplayer.center@f01f4ba8d00a)
+    com.unity.render-pipelines.universal@17.3.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.render-pipelines.universal@37e0d4fc2503)
+    com.unity.test-framework@1.6.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.test-framework@0b7a23ab2e1d)
+    com.unity.ugui@2.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.ugui@bb329a87fcdc)
+    com.unity.modules.accessibility@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.accessibility)
+    com.unity.modules.adaptiveperformance@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.adaptiveperformance)
+    com.unity.modules.ai@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.ai)
+    com.unity.modules.androidjni@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.androidjni)
+    com.unity.modules.animation@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.animation)
+    com.unity.modules.assetbundle@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.assetbundle)
+    com.unity.modules.audio@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.audio)
+    com.unity.modules.cloth@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.cloth)
+    com.unity.modules.director@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.director)
+    com.unity.modules.imageconversion@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.imageconversion)
+    com.unity.modules.imgui@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.imgui)
+    com.unity.modules.jsonserialize@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.jsonserialize)
+    com.unity.modules.particlesystem@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.particlesystem)
+    com.unity.modules.physics@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.physics)
+    com.unity.modules.physics2d@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.physics2d)
+    com.unity.modules.screencapture@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.screencapture)
+    com.unity.modules.terrain@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.terrain)
+    com.unity.modules.terrainphysics@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.terrainphysics)
+    com.unity.modules.tilemap@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.tilemap)
+    com.unity.modules.ui@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.uielements)
+    com.unity.modules.umbra@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.umbra)
+    com.unity.modules.unityanalytics@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.unityanalytics)
+    com.unity.modules.unitywebrequest@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.unitywebrequest)
+    com.unity.modules.unitywebrequestassetbundle@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.unitywebrequestassetbundle)
+    com.unity.modules.unitywebrequestaudio@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.unitywebrequestaudio)
+    com.unity.modules.unitywebrequesttexture@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.unitywebrequesttexture)
+    com.unity.modules.unitywebrequestwww@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.unitywebrequestwww)
+    com.unity.modules.vectorgraphics@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.vectorgraphics)
+    com.unity.modules.vehicles@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.vehicles)
+    com.unity.modules.video@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.video)
+    com.unity.modules.vr@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.vr)
+    com.unity.modules.wind@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.wind)
+    com.unity.modules.xr@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.xr)
+    com.unity.modules.subsystems@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.subsystems)
+    com.unity.modules.hierarchycore@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.modules.hierarchycore)
+    com.unity.ext.nunit@2.0.5 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.ext.nunit@d8c07649098d)
+    com.unity.render-pipelines.core@17.3.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.render-pipelines.core@04ab0eefa0c3)
+    com.unity.shadergraph@17.3.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.shadergraph@c8830f61858d)
+    com.unity.render-pipelines.universal-config@17.0.3 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.render-pipelines.universal-config@8dc1aab4af1d)
+    com.unity.2d.sprite@1.0.0 (location: E:\LAPTOP\Unity\Tree Frog Adventure 3D\Library\PackageCache\com.unity.2d.sprite@d14b9d497a24)
+[Subsystems] No new subsystems found in resolved package list.
+[Package Manager] Done registering packages in 0.02 seconds
+Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInternals/HDRP-Editor-ref.asmref has no target assembly definition
+Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInternals/HDRP-Editor-ref.asmref has no target assembly definition
+[ScriptCompilation] Requested script compilation because: Assetdatabase observed changes in script compilation related files
+Refreshing native plugins compatible for Editor in 7.68 ms, found 4 plugins.
+Starting: C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: E:/LAPTOP/Unity/Tree Frog Adventure 3D
+DisplayProgressbar: Compiling Scripts
+Starting: C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Data\netcorerun\netcorerun.exe "C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Data\Tools\BuildPipeline\ScriptCompilationBuildProgram.exe" "Library/Bee/1900b0aE.dag.json" "Library/Bee/1900b0aE-inputdata.json" "Library\Bee\buildprogram0.traceevents"
+WorkingDir: E:/LAPTOP/Unity/Tree Frog Adventure 3D
+ExitCode: 4 Duration: 4s301ms
+Rebuilding DAG because FileSignature timestamp changed: Library/Bee/1900b0aE-inputdata.json
+[1171/1539  0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+[1172/1539  3s] Csc Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.dll (+2 others)
+*** Tundra requires additional run (4.18 seconds), 2 items updated, 1170 evaluated
+ExitCode: 0 Duration: 2s362ms
+Starting: C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --dagfilejson="Library\Bee\1900b0aE.dag.json" --profile="Library/Bee/backend2.traceevents" ScriptAssemblies
+WorkingDir: E:/LAPTOP/Unity/Tree Frog Adventure 3D
+ExitCode: 0 Duration: 4s806ms
+Finished compiling graph: 1543 nodes, 31758 flattened edges (25574 ToBuild, 256 ToUse), maximum node priority 1749
+[ 729/1539  0s] WriteText Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.rsp
+[1171/1539  0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+[1535/1539  0s] Csc Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.dll (+2 others)
+[1536/1539  3s] ILPostProcess Library/Bee/artifacts/1900b0aE.dag/post-processed/Assembly-CSharp-Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.dll, with 137 defines and 366 references
+
+processors: Unity.Jobs.CodeGen.JobsILPostProcessor, zzzUnity.Burst.CodeGen.BurstILPostProcessor
+
+running Unity.Jobs.CodeGen.JobsILPostProcessor
+
+running zzzUnity.Burst.CodeGen.BurstILPostProcessor
+[1537/1539  0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.dll
+[1538/1539  0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.pdb
+*** Tundra build success (4.76 seconds), 6 items updated, 1539 evaluated
+AssetDatabase: script compilation time: 12.814063s
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  2.671 seconds
+'Packages/com.unity.cinemachine/Editor/Editors/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Packages/com.unity.cinemachine/Editor/Obsolete/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+Refreshing native plugins compatible for Editor in 2.85 ms, found 4 plugins.
+Native extension for WindowsStandalone target not found
+Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInternals/HDRP-Editor-ref.asmref has no target assembly definition
+Refreshing native plugins compatible for Editor in 1.98 ms, found 4 plugins.
+[Licensing::Client] Error: Code 404 while processing request (status: Found 0 entitlement groups and 0 free entitlements matching requested entitlement ids)
+[Licensing::Client] Error: Code 404 while processing request (status: Found 0 entitlement groups and 0 free entitlements matching requested entitlement ids)
+[Licensing::Client] Error: Code 404 while processing request (status: Found 0 entitlement groups and 0 free entitlements matching requested entitlement ids)
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  6.908 seconds
+Domain Reload Profiling: 9574ms
+	BeginReloadAssembly (491ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (28ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (170ms)
+	RebuildCommonClasses (67ms)
+	RebuildNativeTypeToScriptingClass (28ms)
+	initialDomainReloadingComplete (106ms)
+	LoadAllAssembliesAndSetupDomain (1972ms)
+		LoadAssemblies (1015ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (1146ms)
+			TypeCache.Refresh (899ms)
+				TypeCache.ScanAssembly (864ms)
+			BuildScriptInfoCaches (205ms)
+			ResolveRequiredComponents (26ms)
+	FinalizeReload (6909ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (5281ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (121ms)
+			SetLoadedEditorAssemblies (17ms)
+			BeforeProcessingInitializeOnLoad (606ms)
+			ProcessInitializeOnLoadAttributes (3871ms)
+			ProcessInitializeOnLoadMethodAttributes (652ms)
+			AfterProcessingInitializeOnLoad (13ms)
+			EditorAssembliesLoaded (1ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (20ms)
+Start importing Packages/com.unity.render-pipelines.core/Tests/Editor/UnifiedRayTracing/TraceRays.urtshader using Guid(1142bbad8b9e8c44c83a9775ff120d37) (ScriptedImporter)Launched and connected shader compiler UnityShaderCompiler.exe after 0.03 seconds
+
+Compiling Ray Tracing Shader "TraceRays.urtshader", keywords = <no keywords>
+    finished in 0.03 seconds. Local cache hits 1, remote cache hits 0, compiled 0 platform variants
+ -> (artifact id: '711be5bd2aec212bc7f52fe41408d171') in 0.2315866 seconds
+Start importing Packages/com.unity.render-pipelines.universal/Runtime/RendererFeatures/SurfaceCacheGI/SurfaceCacheCore/RisEstimation.urtshader using Guid(713f6141bd66a134383b787f2eaa7c11) (ScriptedImporter)
+Compiling Ray Tracing Shader "RisEstimation.urtshader", keywords = <no keywords>
+    finished in 0.00 seconds. Local cache hits 1, remote cache hits 0, compiled 0 platform variants
+ -> (artifact id: '138b6ddd809598ee99efeedbba515d5d') in 0.0363832 seconds
+Start importing Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/RenderingLayerMask/TraceRenderingLayerMask.urtshader using Guid(94a070d33e408384bafc1dea4a565df9) (ScriptedImporter)
+Compiling Ray Tracing Shader "TraceRenderingLayerMask.urtshader", keywords = <no keywords>
+    finished in 0.00 seconds. Local cache hits 1, remote cache hits 0, compiled 0 platform variants
+ -> (artifact id: 'ae9ed0d17c428fa5d475a19beb4b638b') in 0.0311801 seconds
+Start importing Packages/com.unity.render-pipelines.universal/Runtime/RendererFeatures/SurfaceCacheGI/SurfaceCacheCore/UniformEstimation.urtshader using Guid(94a39d12848d8d64ca962a72b74e7c50) (ScriptedImporter)
+Compiling Ray Tracing Shader "UniformEstimation.urtshader", keywords = <no keywords>
+    finished in 0.00 seconds. Local cache hits 1, remote cache hits 0, compiled 0 platform variants
+ -> (artifact id: 'd3dc4aa72a88bdf174f365f7399c830a') in 0.0218608 seconds
+Start importing Packages/com.unity.render-pipelines.core/Tests/Editor/UnifiedRayTracing/TraceTransparentRays.urtshader using Guid(6513c3b892e933c4f8d00c19d5c47532) (ScriptedImporter)
+Compiling Ray Tracing Shader "TraceTransparentRays.urtshader", keywords = <no keywords>
+    finished in 0.00 seconds. Local cache hits 1, remote cache hits 0, compiled 0 platform variants
+ -> (artifact id: '134aed3489688c5d7443737a8b82ef4a') in 0.0243291 seconds
+Start importing Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/DynamicGI/DynamicGISkyOcclusion.urtshader using Guid(5a2a534753fbdb44e96c3c78b5a6999d) (ScriptedImporter)
+Compiling Ray Tracing Shader "DynamicGISkyOcclusion.urtshader", keywords = <no keywords>
+    finished in 0.00 seconds. Local cache hits 1, remote cache hits 0, compiled 0 platform variants
+ -> (artifact id: '461705bc7692729cfd2d2238848b6419') in 0.0243343 seconds
+Start importing Packages/com.unity.render-pipelines.core/Tests/Editor/UnifiedRayTracing/TraceRaysAndFetchAttributes.urtshader using Guid(fbc59f55df2416344b008dc23753cae2) (ScriptedImporter)
+Compiling Ray Tracing Shader "TraceRaysAndFetchAttributes.urtshader", keywords = <no keywords>
+    finished in 0.00 seconds. Local cache hits 1, remote cache hits 0, compiled 0 platform variants
+ -> (artifact id: '67e914a91375aed09bcd09d6732c8b3c') in 0.0129234 seconds
+Start importing Packages/com.unity.render-pipelines.universal/Runtime/RendererFeatures/SurfaceCacheGI/SurfaceCacheCore/RestirCandidateTemporal.urtshader using Guid(ad3a9f9982f8c4f4a839a78955e78458) (ScriptedImporter)
+Compiling Ray Tracing Shader "RestirCandidateTemporal.urtshader", keywords = <no keywords>
+    finished in 0.00 seconds. Local cache hits 1, remote cache hits 0, compiled 0 platform variants
+ -> (artifact id: '9c5f82b1bec7d1e113aa7d907a3587c5') in 0.0223609 seconds
+Start importing Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/VirtualOffset/TraceVirtualOffset.urtshader using Guid(ff2cbab5da58bf04d82c5f34037ed123) (ScriptedImporter)
+Compiling Ray Tracing Shader "TraceVirtualOffset.urtshader", keywords = <no keywords>
+    finished in 0.00 seconds. Local cache hits 1, remote cache hits 0, compiled 0 platform variants
+ -> (artifact id: '6a26cbc95662ba5a0a572b51348960cd') in 0.0275567 seconds
+Refreshing native plugins compatible for Editor in 3.79 ms, found 4 plugins.
+Preloading 1 native plugins for Editor in 0.16 ms.
+Asset Pipeline Refresh (id=db9123b373a33224e92a4c6d2fd51804): Total: 26.104 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	Summary:
+		Imports: total=0 (actual=0, local cache=0, cache server=0)
+		Asset DB Process Time: managed=6 ms, native=8925 ms
+		Asset DB Callback time: managed=1419 ms, native=94 ms
+		Scripting: domain reloads=1, domain reload time=2672 ms, compile time=12818 ms, other=167 ms
+		Project Asset Count: scripts=2092, non-scripts=5416
+		Asset File Changes: new=1, changed=2, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokeCustomDependenciesCallbacks: 0.002ms
+	InvokePackagesCallback: 32.763ms
+	ApplyChangesToAssetFolders: 1.073ms
+	Scan: 446.830ms
+	OnSourceAssetsModified: 2.683ms
+	CategorizeAssetsWithTransientArtifact: 252.729ms
+	ProcessAssetsWithTransientArtifactChanges: 239.837ms
+	CategorizeAssets: 206.145ms
+	ImportOutOfDateAssets: 7382.123ms (-5888.592ms without children)
+		ImportManagerImport: 443.271ms (5.724ms without children)
+			ImportInProcess: 437.547ms
+		CompileScripts: 12818.009ms
+		ReloadNativeAssets: 0.092ms
+		UnloadImportedAssets: 1.483ms
+		ReloadImportedAssets: 2.531ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 3.488ms
+		InitializingProgressBar: 0.013ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.003ms
+		OnDemandSchedulerStart: 1.826ms
+	PostProcessAllAssets: 1472.031ms
+	Hotreload: 9.028ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.003ms
+	UnloadStreamsBegin: 5.790ms
+	PersistCurrentRevisions: 0.785ms
+	UnloadStreamsEnd: 0.002ms
+	GenerateScriptTypeHashes: 10.606ms
+	Untracked: 16052.603ms
+
+Application.AssetDatabase Initial Refresh End
+Scanning for USB devices : 2.247ms
+Initializing Unity extensions:
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for mode-current-id-Tree Frog Adventure 3D
+Unloading 69 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 10272 unused Assets / (20.5 MB). Loaded Objects now: 11116.
+Memory consumption went from 276.5 MB to 256.0 MB.
+Total: 38.516100 ms (FindLiveObjects: 1.196400 ms CreateObjectMapping: 1.127000 ms MarkObjects: 27.896900 ms  DeleteObjects: 8.293500 ms)
+
+No script asset for WorldData. Check that the definition is in a file of the same name and that it compiles properly.
+Asset Pipeline Refresh (id=771bdbb8b0335d94980b96a9a31bf67a): Total: 0.179 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Start importing ProjectSettings/EditorBuildSettings.asset using Guid(0000000000000000b000000000000000) (LibraryAssetImporter) -> (artifact id: '843d4c03bcb159add3ce27cfb36b77b5') in 0.0049336 seconds
+Refreshing native plugins compatible for Editor in 3.48 ms, found 4 plugins.
+Preloading 1 native plugins for Editor in 0.14 ms.
+Asset Pipeline Refresh (id=971db2f7ce857ac4c8211470e118d658): Total: 0.046 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Asset Pipeline Refresh (id=b7404c01ec29dfc47ba0edfea3ac3e13): Total: 0.016 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+Asset Pipeline Refresh (id=17fc7e0f3113f7543ac7d1d4e00bdaad): Total: 0.009 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Asset Pipeline Refresh (id=1bbaea587a312104db08717dbb7075d3): Total: 0.050 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Start importing Assets/Prefabs/Enemies/BunnyEnemy.prefab using Guid(832b9143e44199f4d87c708bc12eb5f4) (PrefabImporter) -> (artifact id: 'b1255c48af6909e9a7631b7efbc56de2') in 0.005743 seconds
+Refreshing native plugins compatible for Editor in 1.93 ms, found 4 plugins.
+Preloading 1 native plugins for Editor in 0.11 ms.
+Asset Pipeline Refresh (id=a3129d2bc85d5834c8aa05aab1f1c01d): Total: 0.080 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Start importing Assets/Prefabs/Enemies/RhinoEnemy.prefab using Guid(261d7a9c48e85d44dbe7c8e0b00c97ae) (PrefabImporter) -> (artifact id: '5d9c7116d01e95f571b519ddfa7684e4') in 0.0053621 seconds
+Refreshing native plugins compatible for Editor in 3.43 ms, found 4 plugins.
+Preloading 1 native plugins for Editor in 0.18 ms.
+Asset Pipeline Refresh (id=37cd4a94a0786b74ab881e612298385a): Total: 0.102 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Start importing Assets/Prefabs/Enemies/BatEnemy.prefab using Guid(4ae50ac3ecdd44d40a403ed0d0257f04) (PrefabImporter) -> (artifact id: 'c2667a06efa16ee220aeac93ca235c97') in 0.0037918 seconds
+Refreshing native plugins compatible for Editor in 2.09 ms, found 4 plugins.
+Preloading 1 native plugins for Editor in 0.12 ms.
+Asset Pipeline Refresh (id=236d706c71995f5479b5dec6ece17d6b): Total: 0.068 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Start importing Assets/Prefabs/Enemies/ChickenEnemy.prefab using Guid(7ae294096d2da1c4084e0956a2c7d041) (PrefabImporter) -> (artifact id: '25823327d534f54261a3b8fe0c52a797') in 0.0075243 seconds
+Refreshing native plugins compatible for Editor in 1.96 ms, found 4 plugins.
+Preloading 1 native plugins for Editor in 0.10 ms.
+Asset Pipeline Refresh (id=f23d6619089c1254ca781013d8685de9): Total: 0.094 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Start importing Assets/Prefabs/Enemies/PigEnemy.prefab using Guid(111424c2828d7c64e9810c776f2dc053) (PrefabImporter) -> (artifact id: '5671bda1868f035b95f73c46f211c453') in 0.003933 seconds
+Refreshing native plugins compatible for Editor in 1.95 ms, found 4 plugins.
+Preloading 1 native plugins for Editor in 0.09 ms.
+Asset Pipeline Refresh (id=6b427ebecd7cfb34e9d62707fa47af4f): Total: 0.076 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Start importing Assets/Prefabs/Enemies/BeeEnemy.prefab using Guid(a4989c5d3c3bfac4a95172283a4f6f21) (PrefabImporter) -> (artifact id: 'b4dc5678dfce43e69dadc7ba9aff5059') in 0.0074647 seconds
+Refreshing native plugins compatible for Editor in 17.79 ms, found 4 plugins.
+Preloading 1 native plugins for Editor in 0.10 ms.
+Asset Pipeline Refresh (id=d9ce7738d031faf4588735f2224c9cc2): Total: 0.106 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Asset Pipeline Refresh (id=ccf7986d97a8ed64eb770c8ef02b42da): Total: 0.009 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 104 unused Assets / (9.5 KB). Loaded Objects now: 11126.
+Memory consumption went from 218.9 MB to 218.9 MB.
+Total: 30.537100 ms (FindLiveObjects: 0.919200 ms CreateObjectMapping: 0.350200 ms MarkObjects: 29.000100 ms  DeleteObjects: 0.265100 ms)
+
+Start importing Assets/Scenes/Level_1.unity using Guid(e6d8550167756d74ba475663829588b8) (DefaultImporter) -> (artifact id: 'e18d05faf1f533af30a6dc2acaaf50f1') in 0.0020919 seconds
+Refreshing native plugins compatible for Editor in 4.54 ms, found 4 plugins.
+Preloading 1 native plugins for Editor in 0.16 ms.
+Asset Pipeline Refresh (id=e32879c313faf5e41a95e769fd59e037): Total: 0.091 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+<b>[TreeFrog Builder]</b> Setup complete! You can now press Play.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+TreeFrogAdventure.EditorTools.GameSetupBuilder:BuildFullGame () (at Assets/Scripts/Editor/GameSetupBuilder.cs:33)
+
+(Filename: Assets/Scripts/Editor/GameSetupBuilder.cs Line: 33)
+
+<RI> Initializing input.
+Using Windows.Gaming.Input
+Batchmode quit successfully invoked - shutting down!
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+[Licensing::IpcConnector] LicenseClient-jnana-notifications channel disconnected successfully.
+[Licensing::IpcConnector] LicenseClient-jnana channel disconnected successfully.
+AcceleratorClientConnectionCallback - disconnected - :0
+Cleanup mono
+Exiting batchmode successfully now!
+Exiting without the bug reporter. Application will terminate with return code 0

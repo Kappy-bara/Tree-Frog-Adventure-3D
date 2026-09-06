@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 817edb59761cacf48923be629d477845, type: 3}
+  m_Name: PlayerData
+  m_EditorClassIdentifier: Assembly-CSharp::TreeFrogAdventure.Player.PlayerData
+  runSpeed: 2.5
+  rotationSpeed: 720
+  jumpForce: 7
+  doubleJumpForce: 10
+  tongueRange: 30
+  tonguePullSpeed: 25
+  grappleLayer:
+    serializedVersion: 2
+    m_Bits: 33
+  gravity: -25
+  wallCheckDistance: 0.45
+  wallCheckOffset: {x: 0, y: 0.1, z: 0}
+  wallSlideSpeed: -2.5
+  wallJumpUpForce: 11
+  wallJumpAwayForce: 9
+  wallJumpLockDuration: 0.15
+  wallLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  wallMaxSurfaceAngle: 35
+  climbSpeed: 3.5
+  climbShimmySpeed: 2
+  climbExitJumpUpForce: 8
+  climbExitJumpAwayForce: 6
