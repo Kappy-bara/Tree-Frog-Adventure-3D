@@ -42,8 +42,15 @@ namespace TreeFrogAdventure.EditorTools
         private const string RpAssetPath = "Assets/Settings/PC_RPAsset.asset";
         private const int TargetCascades = 2;
 
+        // Both the pre-split biome scenes and the post-split environment scenes.
+        // Missing entries are skipped, so this works whichever order you run
+        // this and Build Level Structure in.
         private static readonly string[] Scenes =
         {
+            "Assets/Scenes/Environments/Env_EmeraldForest.unity",
+            "Assets/Scenes/Environments/Env_CanopyHeights.unity",
+            "Assets/Scenes/Environments/Env_MistySwamp.unity",
+            "Assets/Scenes/Environments/Env_VolcanicHighlands.unity",
             "Assets/Scenes/Level_6_CanopyHeights.unity",
             "Assets/Scenes/Level_11_MistySwamp.unity",
             "Assets/Scenes/Level_16_VolcanicHighlands.unity",
