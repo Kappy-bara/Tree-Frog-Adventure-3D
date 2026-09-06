@@ -62,3 +62,12 @@ crashlytics-build.properties
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# ---------------------------------------------------------------------------
+# Stray Unity batchmode logs left at the project root
+# ---------------------------------------------------------------------------
+/build_log*.txt
+/compile_check*.txt
+/load_test.txt
+*.slnx
+.vsconfig
