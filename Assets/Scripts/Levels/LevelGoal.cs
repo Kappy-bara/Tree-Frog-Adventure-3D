@@ -49,6 +49,11 @@ namespace TreeFrogAdventure.Levels
             }
 
             LevelProgress.CompleteLevel(level);
+
+            // Optional: a LevelBanner on LevelSystems shows the completion card.
+            var banner = FindAnyObjectByType<LevelBanner>();
+            if (banner != null) banner.ShowComplete(delaySeconds);
+
             StartCoroutine(Finish(level));
         }
 

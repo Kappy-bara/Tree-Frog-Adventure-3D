@@ -60,8 +60,11 @@ namespace TreeFrogAdventure.Player
         [Tooltip("Time after a wall jump before the same wall can be re-detected")]
         public float wallJumpLockDuration = 0.15f;
 
+        // Default is Default(0) + Barrier(15). Layer 9 is empty in this project and
+        // every Wall object sits on Barrier, so the old 1 << 9 made wall jumping
+        // silently impossible.
         [Tooltip("Layers considered as walls")]
-        public LayerMask wallLayers = 1 << 9;
+        public LayerMask wallLayers = (1 << 0) | (1 << 15);
 
         [Tooltip("Max degrees a surface may tilt away from true vertical and still count as a wall (rejects slopes/ramps). Keep comfortably below the CharacterController's Slope Limit.")]
         public float wallMaxSurfaceAngle = 35f;
@@ -80,5 +83,41 @@ namespace TreeFrogAdventure.Player
 
         [Tooltip("Velocity applied away from the vine when releasing")]
         public float climbExitJumpAwayForce = 4f;
+
+        // ──────────────────────────────── Combat ───────────────────────────────────
+
+        [Header("Stomping")]
+        [Tooltip("Upward velocity given to the player after stomping an enemy")]
+        public float stompBounceForce = 9f;
+
+        [Tooltip("How flat the contact must be to count as a stomp rather than a side hit. " +
+                 "1 = perfectly on top. Below this, the enemy damages the player instead.")]
+        [Range(0.1f, 0.95f)]
+        public float stompNormalThreshold = 0.4f;
+
+        [Tooltip("Player must be falling at least this fast for a stomp to register")]
+        public float stompMinFallSpeed = 0.5f;
+
+        [Header("Throwable Flies")]
+        [Tooltip("Launch speed of a thrown fly")]
+        public float flyThrowForce = 22f;
+
+        [Tooltip("Seconds between throws")]
+        public float flyCooldown = 0.35f;
+
+        [Tooltip("Maximum flies the player can carry")]
+        public int maxFlies = 10;
+
+        [Tooltip("Flies the player starts a level with")]
+        public int startingFlies = 5;
+
+        [Tooltip("Damage a single fly deals")]
+        public int flyDamage = 1;
+
+        [Tooltip("Seconds before an un-hit fly despawns")]
+        public float flyLifetime = 3f;
+
+        [Tooltip("Layers a thrown fly collides with (enemies + world)")]
+        public LayerMask flyHitLayers = (1 << 0) | (1 << 11) | (1 << 15);
     }
 }

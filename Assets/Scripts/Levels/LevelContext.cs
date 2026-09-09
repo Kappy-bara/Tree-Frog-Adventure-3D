@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using UnityEngine;
+using TreeFrogAdventure.Core;
 using TreeFrogAdventure.Player;
 
 namespace TreeFrogAdventure.Levels
@@ -30,6 +31,10 @@ namespace TreeFrogAdventure.Levels
 
         public int LevelNumber { get; private set; }
 
+        /// <summary>Where the level starts. Used as the respawn fallback when the
+        /// player dies before reaching any checkpoint.</summary>
+        public Transform SpawnPoint => spawnPoint;
+
         private void Awake()
         {
             Current = this;
@@ -47,6 +52,28 @@ namespace TreeFrogAdventure.Levels
         private void Start()
         {
             MovePlayerToSpawn();
+            InitialiseSession();
+        }
+
+        /// <summary>
+        /// Clears the previous level's checkpoint and tops fly ammo back up, so every
+        /// level is startable even if you arrived with none left.
+        /// </summary>
+        private void InitialiseSession()
+        {
+            int startingFlies = 5;
+
+            var player = FindAnyObjectByType<PlayerHealth>();
+            if (player != null)
+            {
+                var controller = player.GetComponent<PlayerController>();
+                if (controller != null && controller.Data != null)
+                {
+                    startingFlies = controller.Data.startingFlies;
+                }
+            }
+
+            GameSession.ResetForLevel(startingFlies);
         }
 
         private void OnDestroy()

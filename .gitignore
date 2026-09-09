@@ -71,3 +71,4 @@ desktop.ini
 /load_test.txt
 *.slnx
 .vsconfig
+/validation_result.txt

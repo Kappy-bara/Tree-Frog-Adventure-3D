@@ -1305,6 +1305,9 @@ GameObject:
   - component: {fileID: 2971004982536817126}
   - component: {fileID: 7385257018836887937}
   - component: {fileID: 2022486904071931375}
+  - component: {fileID: 8812340541706514161}
+  - component: {fileID: 2891001253078893073}
+  - component: {fileID: 3016964522917236179}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -1438,10 +1441,53 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f10aacf2b5017448bc9535a6f85c599, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TreeFrogAdventure.Player.PlayerHealth
-  maxHealth: 3
+  startingHealth: 3
   invincibilityDuration: 1.5
   blinkInterval: 0.1
-  characterRenderer: {fileID: 0}
+  characterRenderer: {fileID: 5602701843421747706}
+  healthText: {fileID: 0}
+  respawnDelay: 0.8
+--- !u!114 &8812340541706514161
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8108825387034121183}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17fd5bf8a916c8443aa684deb8d08aa8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TreeFrogAdventure.Player.PlayerStomp
+--- !u!114 &2891001253078893073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8108825387034121183}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ee8849cc198d554898d12b195178a18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TreeFrogAdventure.Player.PlayerRespawn
+  fallbackPosition: {x: 0, y: 20, z: 0}
+--- !u!114 &3016964522917236179
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8108825387034121183}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a36c589d2fb79e498fe22196effa596, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TreeFrogAdventure.Player.FlyThrower
+  flyPrefab: {fileID: 528899833461482274, guid: 5fe57f28227baec45992c575daee9ab7, type: 3}
+  muzzle: {fileID: 1827127472307682115}
+  aimCamera: {fileID: 962129047492621707}
+  aimDistance: 60
 --- !u!1 &8126632240583940404
 GameObject:
   m_ObjectHideFlags: 0

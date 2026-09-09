@@ -1,5 +1,7 @@
 using System.Collections;
 using TMPro;
+using TreeFrogAdventure.Core;
+using TreeFrogAdventure.Levels;
 using TreeFrogAdventure.Menu;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -26,22 +28,37 @@ namespace TreeFrogAdventure.Player
         [SerializeField] private Renderer characterRenderer;
         [SerializeField] private TextMeshProUGUI healthText;
 
+        [Header("Respawn")]
+        [Tooltip("Pause after dying before the player reappears at the checkpoint.")]
+        [SerializeField] private float respawnDelay = 0.8f;
+
         private int _currentHealth;
         private bool _isInvincible;
+        private bool _isRespawning;
         private TMP_FontAsset _font;
 
+        private PlayerStomp _stomp;
+        private PlayerRespawn _respawn;
+        private PlayerController _controller;
+
         public int CurrentHealth => _currentHealth;
+        public bool IsInvincible => _isInvincible;
 
         private void Awake()
         {
             _currentHealth = startingHealth;
             IsDead = false;
+
+            _stomp = GetComponent<PlayerStomp>();
+            _respawn = GetComponent<PlayerRespawn>();
+            _controller = GetComponent<PlayerController>();
+
             UpdateHealthDisplay();
         }
 
         public void TakeDamage(int amount = 1)
         {
-            if (_isInvincible || IsDead) return;
+            if (_isInvincible || IsDead || _isRespawning) return;
 
             _currentHealth = Mathf.Max(0, _currentHealth - amount);
             UpdateHealthDisplay();
@@ -67,24 +84,47 @@ namespace TreeFrogAdventure.Player
             if (healthText != null) healthText.text = _currentHealth.ToString();
         }
 
-        private void OnTriggerEnter(Collider other)
-        {
-            var source = other.GetComponent<DamageSource>();
-            if (source != null) TakeDamage(source.damageAmount);
-        }
+        private void OnTriggerEnter(Collider other) => ResolveContact(other, Vector3.zero, false);
 
         private void OnTriggerStay(Collider other)
         {
             // A trigger only fires Enter once per continuous overlap — Stay lets contact
             // keep damaging (gated by the invincibility window) if the source doesn't leave.
-            var source = other.GetComponent<DamageSource>();
-            if (source != null) TakeDamage(source.damageAmount);
+            ResolveContact(other, Vector3.zero, false);
         }
 
         private void OnControllerColliderHit(ControllerColliderHit hit)
+            => ResolveContact(hit.collider, hit.normal, true);
+
+        /// <summary>
+        /// Single entry point for every kind of contact. Stomping is tested first: a
+        /// successful stomp must NOT also damage the player, and routing both through
+        /// here avoids the two components racing on the same collision.
+        /// </summary>
+        private void ResolveContact(Collider other, Vector3 normal, bool hasNormal)
         {
-            var source = hit.collider.GetComponent<DamageSource>();
-            if (source != null) TakeDamage(source.damageAmount);
+            if (IsDead || other == null) return;
+
+            if (_stomp != null && _stomp.TryStomp(other, normal, hasNormal)) return;
+
+            var source = other.GetComponentInParent<DamageSource>();
+
+            // EnemyHealth disables DamageSource the moment an enemy dies, so a corpse
+            // lingering through its despawn delay stops hurting.
+            if (source == null || !source.enabled) return;
+
+            if (source.knockbackForce > 0f && _controller != null)
+            {
+                Vector3 away = transform.position - source.transform.position;
+                away.y = 0f;
+                if (away.sqrMagnitude < 1e-4f) away = -transform.forward;
+
+                _controller.ApplyExternalVelocity(
+                    away.normalized * source.knockbackForce + Vector3.up * source.knockbackUpForce);
+            }
+
+            if (source.instantKill) Kill();
+            else TakeDamage(source.damageAmount);
         }
 
         private IEnumerator InvincibilityRoutine()
@@ -103,8 +143,34 @@ namespace TreeFrogAdventure.Player
             _isInvincible = false;
         }
 
+        /// <summary>
+        /// Bypasses hit points — lava, bottomless pits, crushers. Still costs a life
+        /// and still respawns at the checkpoint.
+        /// </summary>
+        public void Kill()
+        {
+            if (IsDead || _isRespawning) return;
+
+            _currentHealth = 0;
+            UpdateHealthDisplay();
+            Die();
+        }
+
+        /// <summary>
+        /// Health has hit zero. Spends a life; only a run with no lives left is
+        /// actually game over. Previously this reloaded the whole level on any death,
+        /// which is why checkpoints could not exist.
+        /// </summary>
         private void Die()
         {
+            if (IsDead || _isRespawning) return;
+
+            if (GameSession.LoseLife())
+            {
+                StartCoroutine(RespawnRoutine());
+                return;
+            }
+
             IsDead = true;
             Time.timeScale = 0f;
             Cursor.lockState = CursorLockMode.None;
@@ -115,8 +181,43 @@ namespace TreeFrogAdventure.Player
             ShowDeathScreen();
         }
 
+        private IEnumerator RespawnRoutine()
+        {
+            _isRespawning = true;
+
+            StopCoroutine(nameof(InvincibilityRoutine));
+            _isInvincible = false;
+
+            if (characterRenderer != null) characterRenderer.enabled = false;
+            if (_controller != null) _controller.enabled = false;
+
+            yield return new WaitForSeconds(respawnDelay);
+
+            if (_respawn != null) _respawn.RespawnNow();
+
+            // Clear inherited momentum, or the player keeps the fatal fall's velocity
+            // and immediately dies again at the checkpoint.
+            if (_controller != null)
+            {
+                _controller.enabled = true;
+                _controller.ApplyExternalVelocity(Vector3.zero);
+            }
+
+            _currentHealth = startingHealth;
+            UpdateHealthDisplay();
+
+            if (characterRenderer != null) characterRenderer.enabled = true;
+
+            _isRespawning = false;
+
+            // Brief grace period so you are not instantly re-killed by whatever
+            // wandered onto the checkpoint.
+            StartCoroutine(InvincibilityRoutine());
+        }
+
         // ---------------------------------------------------------------
-        // Death screen UI (built at runtime, same approach as PauseMenuController)
+        // Game over UI (built at runtime, same approach as PauseMenuController).
+        // Only reached when the last life is spent — ordinary deaths respawn.
         // ---------------------------------------------------------------
 
         private void ShowDeathScreen()
@@ -147,7 +248,7 @@ namespace TreeFrogAdventure.Player
             var dimImage = dim.AddComponent<Image>();
             dimImage.color = new Color(0.3f, 0f, 0f, 0.7f);
 
-            var title = CreateText("You Died", canvasGO.transform, 80);
+            var title = CreateText("Game Over", canvasGO.transform, 80);
             var titleRect = (RectTransform)title.transform;
             titleRect.anchorMin = new Vector2(0.5f, 0.5f);
             titleRect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -183,6 +284,10 @@ namespace TreeFrogAdventure.Player
         {
             IsDead = false;
             Time.timeScale = 1f;
+
+            // The run ended, so restarting is a fresh run: lives and coins reset.
+            GameSession.ResetForNewGame();
+
             // Not GetActiveScene(): under additive level loading the active
             // scene is the shared biome environment, so reloading it alone
             // would drop the player and the rest of the gameplay layer.
@@ -193,6 +298,7 @@ namespace TreeFrogAdventure.Player
         {
             IsDead = false;
             Time.timeScale = 1f;
+            GameSession.ResetForNewGame();
             LevelLoader.LoadMainMenu();
         }
 

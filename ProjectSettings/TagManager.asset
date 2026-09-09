@@ -19,9 +19,9 @@ TagManager:
   - vine
   - 
   - Player
-  - 
-  - 
-  - 
+  - Enemy
+  - Hazard
+  - Projectile
   - 
   - Barrier
   - 

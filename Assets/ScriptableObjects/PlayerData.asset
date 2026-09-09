@@ -20,7 +20,7 @@ MonoBehaviour:
   tonguePullSpeed: 25
   grappleLayer:
     serializedVersion: 2
-    m_Bits: 33
+    m_Bits: 32769
   gravity: -25
   wallCheckDistance: 0.45
   wallCheckOffset: {x: 0, y: 0.1, z: 0}
@@ -30,7 +30,7 @@ MonoBehaviour:
   wallJumpLockDuration: 0.15
   wallLayers:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 32769
   wallMaxSurfaceAngle: 35
   climbSpeed: 3.5
   climbShimmySpeed: 2

@@ -2,7 +2,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using TreeFrogAdventure.Enemies;
 using TreeFrogAdventure.Menu;
+using TreeFrogAdventure.Player;
+using TreeFrogAdventure.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -39,6 +42,7 @@ namespace TreeFrogAdventure.EditorTools
             CheckLevelResolution();
             CheckSceneFiles();
             CheckEnvironmentScenes();
+            CheckGameplaySetup();
 
             _sb.AppendLine();
             _sb.AppendLine($"RESULT: {_fail} failure(s), {_warn} warning(s)");
@@ -56,6 +60,118 @@ namespace TreeFrogAdventure.EditorTools
         private static void Pass(string msg) => _sb.AppendLine("  PASS  " + msg);
         private static void Fail(string msg) { _sb.AppendLine("  FAIL  " + msg); _fail++; }
         private static void Warn(string msg) { _sb.AppendLine("  WARN  " + msg); _warn++; }
+
+        // ------------------------------------------------------------------
+        private static void CheckGameplaySetup()
+        {
+            _sb.AppendLine("[6] Gameplay systems");
+
+            // --- layers ------------------------------------------------------
+            foreach (string layer in new[] { "Enemy", "Hazard", "Projectile" })
+            {
+                if (LayerMask.NameToLayer(layer) >= 0) Pass($"layer '{layer}' exists");
+                else Fail($"layer '{layer}' is missing — add it in Tags and Layers");
+            }
+
+            // --- PlayerData masks (the wall-jump bug) ------------------------
+            var data = AssetDatabase.LoadAssetAtPath<PlayerData>("Assets/ScriptableObjects/PlayerData.asset");
+            if (data == null)
+            {
+                Fail("PlayerData.asset not found");
+            }
+            else
+            {
+                int barrier = LayerMask.NameToLayer("Barrier");
+                if (barrier >= 0 && (data.wallLayers.value & (1 << barrier)) != 0)
+                    Pass("wallLayers includes Barrier — wall jump can actually hit the Wall objects");
+                else
+                    Fail($"wallLayers ({data.wallLayers.value}) excludes Barrier — wall jump is inert");
+
+                if ((data.grappleLayer.value & (1 << 5)) == 0)
+                    Pass("grappleLayer no longer includes the UI layer");
+                else
+                    Fail("grappleLayer still includes UI (layer 5)");
+            }
+
+            // --- enemy prefabs -----------------------------------------------
+            string[] enemies =
+            {
+                "Enemy_Bunny", "Enemy_Rhino", "Enemy_Chicken",
+                "Enemy_Pig", "Enemy_Bat", "Enemy_Bee",
+            };
+
+            foreach (string name in enemies)
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Enemies/{name}.prefab");
+                if (prefab == null) { Fail($"missing enemy prefab: {name}"); continue; }
+
+                bool health = prefab.GetComponent<EnemyHealth>() != null;
+                bool ai = prefab.GetComponent<EnemyBase>() != null;
+                bool damage = prefab.GetComponentInChildren<DamageSource>(true) != null;
+                bool collider = prefab.GetComponentInChildren<Collider>(true) != null;
+                bool visual = prefab.GetComponentInChildren<EnemyVisual>(true) != null;
+
+                if (health && ai && damage && collider && visual) Pass($"{name} fully wired");
+                else Fail($"{name} incomplete — health:{health} ai:{ai} damage:{damage} " +
+                          $"collider:{collider} visual:{visual}");
+            }
+
+            // --- player combat components ------------------------------------
+            var player = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player_Camera.prefab");
+            if (player == null)
+            {
+                Fail("Player_Camera.prefab not found");
+            }
+            else
+            {
+                bool stomp = player.GetComponentInChildren<PlayerStomp>(true) != null;
+                bool respawn = player.GetComponentInChildren<PlayerRespawn>(true) != null;
+                var thrower = player.GetComponentInChildren<FlyThrower>(true);
+
+                if (stomp) Pass("player has PlayerStomp"); else Fail("player is missing PlayerStomp");
+                if (respawn) Pass("player has PlayerRespawn"); else Fail("player is missing PlayerRespawn");
+
+                if (thrower == null)
+                {
+                    Fail("player is missing FlyThrower");
+                }
+                else
+                {
+                    var so = new SerializedObject(thrower);
+                    bool wired = so.FindProperty("flyPrefab").objectReferenceValue != null;
+                    if (wired) Pass("FlyThrower has its projectile prefab");
+                    else Fail("FlyThrower.flyPrefab is empty — throwing does nothing");
+                }
+            }
+
+            // --- level furniture ---------------------------------------------
+            int missingHud = 0, missingKill = 0, missingCheckpoint = 0, missingBanner = 0;
+
+            for (int level = 1; level <= LevelProgress.TotalLevels; level++)
+            {
+                string path = $"Assets/Scenes/Levels/{LevelProgress.GetLevelScene(level)}.unity";
+                if (!File.Exists(path)) continue;
+
+                string text = File.ReadAllText(path);
+                if (!text.Contains("GameHUD")) missingHud++;
+                if (!text.Contains("KillVolume")) missingKill++;
+                if (!text.Contains("Checkpoint")) missingCheckpoint++;
+                if (!text.Contains("LevelBanner")) missingBanner++;
+            }
+
+            Report("HUD", missingHud);
+            Report("KillVolume", missingKill);
+            Report("Checkpoint", missingCheckpoint);
+            Report("LevelBanner", missingBanner);
+
+            _sb.AppendLine();
+        }
+
+        private static void Report(string what, int missing)
+        {
+            if (missing == 0) Pass($"all {LevelProgress.TotalLevels} level scenes have a {what}");
+            else Fail($"{missing} level scene(s) missing a {what}");
+        }
 
         // ------------------------------------------------------------------
         private static void CheckConstants()

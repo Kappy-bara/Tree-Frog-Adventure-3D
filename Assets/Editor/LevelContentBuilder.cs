@@ -1,9 +1,11 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using TreeFrogAdventure.Hazards;
 using TreeFrogAdventure.Levels;
 using TreeFrogAdventure.Menu;
 using TreeFrogAdventure.Player;
+using TreeFrogAdventure.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -36,6 +38,13 @@ namespace TreeFrogAdventure.EditorTools
         private const string SystemsRoot = "LevelSystems";
         private const string SpawnName = "SpawnPoint";
         private const string GoalName = "LevelGoal";
+        private const string HudName = "GameHUD";
+        private const string KillVolumeName = "KillVolume";
+        private const string CheckpointName = "Checkpoint_Mid";
+
+        private const string HudPrefab = "Assets/Prefabs/UI/GameHUD.prefab";
+        private const string KillVolumePrefab = "Assets/Prefabs/Hazards/Hazard_KillVolume.prefab";
+        private const string CheckpointPrefab = "Assets/Prefabs/Level/Checkpoint.prefab";
 
         // Playable area is the CENTER terrain tile; the other four are borders.
         private static readonly Vector2 MapCenter = new Vector2(0.5f, 0.6f);
@@ -206,8 +215,90 @@ namespace TreeFrogAdventure.EditorTools
                 goal.transform.position = GroundAt(xz, envScene, 2f);
             }
 
+            // --- HUD / kill volume / mid checkpoint ---------------------------
+            string extras = AddLevelFurniture(levelScene, envScene, systems, spawn, goal.transform);
+
             return $"mood={mood.Name,-8} spawn={(newSpawn ? "created" : "kept")} " +
-                   $"goal={(newGoal ? $"placed at {goal.transform.position:F0}" : "kept")}";
+                   $"goal={(newGoal ? $"placed at {goal.transform.position:F0}" : "kept")} {extras}";
+        }
+
+        /// <summary>
+        /// Everything a level needs to be playable regardless of its design: a HUD, a
+        /// catch-all kill volume under the map, one mid-level checkpoint, and the
+        /// intro/complete banner.
+        /// </summary>
+        private static string AddLevelFurniture(Scene levelScene, Scene envScene,
+                                                GameObject systems, Transform spawn, Transform goal)
+        {
+            var added = new System.Collections.Generic.List<string>();
+
+            // Banner lives on LevelSystems alongside LevelContext.
+            if (systems.GetComponent<LevelBanner>() == null)
+            {
+                systems.AddComponent<LevelBanner>();
+                added.Add("banner");
+            }
+
+            // The old per-level Canvas held a lone HealthText with no code behind it;
+            // GameHUD replaces it. Removing it avoids two health readouts on screen.
+            foreach (GameObject root in levelScene.GetRootGameObjects())
+            {
+                if (root.name == "Canvas" && root.GetComponentInChildren<HudController>(true) == null)
+                {
+                    Object.DestroyImmediate(root);
+                    added.Add("old-canvas-removed");
+                    break;
+                }
+            }
+
+            if (InstantiateIfMissing(levelScene, HudPrefab, HudName, Vector3.zero, out _))
+            {
+                added.Add("hud");
+            }
+
+            // Sits well below the lowest ground so any fall is caught.
+            Vector3 centre = GroundAt(MapCenter, envScene, 0f);
+            if (InstantiateIfMissing(levelScene, KillVolumePrefab, KillVolumeName,
+                                     new Vector3(MapCenter.x, centre.y - 30f, MapCenter.y), out _))
+            {
+                added.Add("killvolume");
+            }
+
+            // One checkpoint halfway between spawn and goal, so a death does not send
+            // the player all the way back.
+            if (spawn != null && goal != null)
+            {
+                Vector2 mid = new Vector2(
+                    (spawn.position.x + goal.position.x) * 0.5f,
+                    (spawn.position.z + goal.position.z) * 0.5f);
+
+                if (InstantiateIfMissing(levelScene, CheckpointPrefab, CheckpointName,
+                                         GroundAt(mid, envScene, 0.1f), out _))
+                {
+                    added.Add("checkpoint");
+                }
+            }
+
+            return added.Count > 0 ? "+" + string.Join(",", added) : "furniture kept";
+        }
+
+        private static bool InstantiateIfMissing(Scene scene, string prefabPath, string objectName,
+                                                 Vector3 position, out GameObject instance)
+        {
+            instance = scene.GetRootGameObjects().FirstOrDefault(g => g.name == objectName);
+            if (instance != null) return false;
+
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (prefab == null)
+            {
+                Debug.LogError($"[LevelContentBuilder] Missing prefab: {prefabPath}");
+                return false;
+            }
+
+            instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
+            instance.name = objectName;
+            instance.transform.position = position;
+            return true;
         }
 
         // ---------------------------------------------------------------------
