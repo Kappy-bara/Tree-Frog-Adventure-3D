@@ -69,6 +69,18 @@ namespace TreeFrogAdventure.EditorTools
                     log.AppendLine("  + PlayerRespawn");
                 }
 
+                if (player.GetComponent<PlayerSwim>() == null)
+                {
+                    player.AddComponent<PlayerSwim>();
+                    log.AppendLine("  + PlayerSwim");
+                }
+
+                if (player.GetComponent<PlayerBuffs>() == null)
+                {
+                    player.AddComponent<PlayerBuffs>();
+                    log.AppendLine("  + PlayerBuffs");
+                }
+
                 var thrower = player.GetComponent<FlyThrower>();
                 if (thrower == null)
                 {
@@ -159,6 +171,15 @@ namespace TreeFrogAdventure.EditorTools
                                              new Vector2(40f, -180f), new Color(0.4f, 0.9f, 0.6f), font);
             TextMeshProUGUI health = MakeStat(root.transform, "HealthText", "HP", "3",
                                               new Vector2(40f, -250f), new Color(0.45f, 0.85f, 1f), font);
+            TextMeshProUGUI crystals = MakeStat(root.transform, "CrystalsText", "Crystal", "0",
+                                                new Vector2(40f, -320f), new Color(0.65f, 0.55f, 1f), font);
+
+            // Buffs get one wide line rather than a stat pair — it holds a variable
+            // number of entries with live countdowns.
+            TextMeshProUGUI buffs = MakeLabel(root.transform, "BuffsText", "", 34,
+                                              new Color(1f, 0.95f, 0.5f), font,
+                                              new Vector2(40f, -400f), new Vector2(700f, 50f),
+                                              TextAlignmentOptions.Left);
 
             var hud = root.AddComponent<HudController>();
             var so = new SerializedObject(hud);
@@ -166,10 +187,12 @@ namespace TreeFrogAdventure.EditorTools
             so.FindProperty("coinsText").objectReferenceValue = coins;
             so.FindProperty("fliesText").objectReferenceValue = flies;
             so.FindProperty("healthText").objectReferenceValue = health;
+            so.FindProperty("crystalsText").objectReferenceValue = crystals;
+            so.FindProperty("buffsText").objectReferenceValue = buffs;
             so.ApplyModifiedPropertiesWithoutUndo();
 
             PlaceholderFactory.SavePrefab(root, HudPrefab);
-            return "GameHUD.prefab built (lives / coins / flies / health)";
+            return "GameHUD.prefab built (lives / coins / flies / health / crystals / buffs)";
         }
 
         /// <summary>A label pair: a small caption and the value beside it.</summary>

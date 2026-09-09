@@ -22,28 +22,37 @@ namespace TreeFrogAdventure.UI
         [SerializeField] private TextMeshProUGUI coinsText;
         [SerializeField] private TextMeshProUGUI fliesText;
         [SerializeField] private TextMeshProUGUI healthText;
+        [SerializeField] private TextMeshProUGUI crystalsText;
+
+        [Tooltip("Shows active power-ups and their remaining seconds.")]
+        [SerializeField] private TextMeshProUGUI buffsText;
 
         [Header("Formatting")]
         [SerializeField] private string livesFormat = "x{0}";
         [SerializeField] private string coinsFormat = "{0}";
         [SerializeField] private string fliesFormat = "{0}";
         [SerializeField] private string healthFormat = "{0}";
+        [SerializeField] private string crystalsFormat = "{0}";
 
         private PlayerHealth _player;
+        private PlayerBuffs _buffs;
         private int _lastHealth = -1;
         private float _playerSearchTimer;
+        private readonly System.Text.StringBuilder _buffLine = new System.Text.StringBuilder();
 
         private void OnEnable()
         {
             GameSession.OnLivesChanged += SetLives;
             GameSession.OnCoinsChanged += SetCoins;
             GameSession.OnFliesChanged += SetFlies;
+            GameSession.OnCrystalsChanged += SetCrystals;
 
             // Push current values immediately — the events only fire on change, and
             // the HUD is usually created after the session already has state.
             SetLives(GameSession.Lives);
             SetCoins(GameSession.Coins);
             SetFlies(GameSession.Flies);
+            SetCrystals(GameSession.Crystals);
         }
 
         private void OnDisable()
@@ -51,12 +60,11 @@ namespace TreeFrogAdventure.UI
             GameSession.OnLivesChanged -= SetLives;
             GameSession.OnCoinsChanged -= SetCoins;
             GameSession.OnFliesChanged -= SetFlies;
+            GameSession.OnCrystalsChanged -= SetCrystals;
         }
 
         private void Update()
         {
-            if (healthText == null) return;
-
             if (_player == null)
             {
                 _playerSearchTimer -= Time.unscaledDeltaTime;
@@ -65,14 +73,45 @@ namespace TreeFrogAdventure.UI
                 _playerSearchTimer = 0.5f;
                 _player = FindAnyObjectByType<PlayerHealth>();
                 if (_player == null) return;
+
+                _buffs = _player.GetComponent<PlayerBuffs>();
             }
 
-            if (_player.CurrentHealth != _lastHealth)
+            if (healthText != null && _player.CurrentHealth != _lastHealth)
             {
                 _lastHealth = _player.CurrentHealth;
                 healthText.text = string.Format(healthFormat, _lastHealth);
             }
+
+            UpdateBuffs();
         }
+
+        /// <summary>
+        /// Buffs are polled rather than event-driven because the countdown has to tick
+        /// every frame anyway — an event would only tell us when one starts or ends.
+        /// </summary>
+        private void UpdateBuffs()
+        {
+            if (buffsText == null || _buffs == null) return;
+
+            _buffLine.Clear();
+
+            foreach (var buff in _buffs.ActiveBuffs())
+            {
+                if (_buffLine.Length > 0) _buffLine.Append("   ");
+                _buffLine.Append(Label(buff.Key)).Append(' ').Append(Mathf.CeilToInt(buff.Value)).Append('s');
+            }
+
+            buffsText.text = _buffLine.ToString();
+        }
+
+        private static string Label(BuffKind kind) => kind switch
+        {
+            BuffKind.SpeedBoost => "SPEED",
+            BuffKind.JumpBoost => "JUMP",
+            BuffKind.Invincibility => "INVINCIBLE",
+            _ => kind.ToString(),
+        };
 
         private void SetLives(int value)
         {
@@ -87,6 +126,11 @@ namespace TreeFrogAdventure.UI
         private void SetFlies(int value)
         {
             if (fliesText != null) fliesText.text = string.Format(fliesFormat, value);
+        }
+
+        private void SetCrystals(int value)
+        {
+            if (crystalsText != null) crystalsText.text = string.Format(crystalsFormat, value);
         }
     }
 }

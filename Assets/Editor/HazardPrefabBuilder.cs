@@ -51,6 +51,20 @@ namespace TreeFrogAdventure.EditorTools
                                                  new Color(0.35f, 0.85f, 0.95f), PrimitiveType.Cube,
                                                  new Vector3(0.32f, 0.32f, 0.32f), new Vector3(45f, 45f, 0f)));
 
+            // Power-ups and the story collectible.
+            report.AppendLine("  " + BuildPickup("Pickup_SpeedBoost", CollectibleKind.SpeedBoost, 1,
+                                                 new Color(0.30f, 0.80f, 1f), PrimitiveType.Capsule,
+                                                 new Vector3(0.22f, 0.30f, 0.22f), new Vector3(0f, 0f, 90f)));
+            report.AppendLine("  " + BuildPickup("Pickup_JumpBoost", CollectibleKind.JumpBoost, 1,
+                                                 new Color(0.45f, 1f, 0.45f), PrimitiveType.Capsule,
+                                                 new Vector3(0.22f, 0.32f, 0.22f), null));
+            report.AppendLine("  " + BuildPickup("Pickup_Invincibility", CollectibleKind.Invincibility, 1,
+                                                 new Color(1f, 0.90f, 0.30f), PrimitiveType.Sphere,
+                                                 new Vector3(0.40f, 0.40f, 0.40f), null));
+            report.AppendLine("  " + BuildPickup("Pickup_NatureCrystal", CollectibleKind.NatureCrystal, 1,
+                                                 new Color(0.70f, 0.45f, 1f), PrimitiveType.Cube,
+                                                 new Vector3(0.30f, 0.55f, 0.30f), new Vector3(35f, 45f, 0f)));
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log(report.ToString());

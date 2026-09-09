@@ -24,6 +24,12 @@ namespace TreeFrogAdventure.Core
         public static int Coins { get; private set; }
         public static int Flies { get; private set; }
 
+        /// <summary>Nature Crystals recovered — the story collectible, one per level.</summary>
+        public static int Crystals { get; private set; }
+
+        /// <summary>Secret areas discovered in the current level.</summary>
+        public static int SecretsThisLevel { get; private set; }
+
         public static bool HasCheckpoint { get; private set; }
         public static Vector3 CheckpointPosition { get; private set; }
         public static Quaternion CheckpointRotation { get; private set; } = Quaternion.identity;
@@ -31,6 +37,8 @@ namespace TreeFrogAdventure.Core
         public static event Action<int> OnLivesChanged;
         public static event Action<int> OnCoinsChanged;
         public static event Action<int> OnFliesChanged;
+        public static event Action<int> OnCrystalsChanged;
+        public static event Action<int> OnSecretsChanged;
 
         /// <summary>
         /// With "Enter Play Mode Options" set to skip domain reload, statics survive
@@ -43,12 +51,16 @@ namespace TreeFrogAdventure.Core
             Lives = StartingLives;
             Coins = 0;
             Flies = 0;
+            Crystals = 0;
+            SecretsThisLevel = 0;
             ClearCheckpoint();
 
             // Listeners from the previous session are dead objects.
             OnLivesChanged = null;
             OnCoinsChanged = null;
             OnFliesChanged = null;
+            OnCrystalsChanged = null;
+            OnSecretsChanged = null;
         }
 
         // ------------------------------------------------------------ lifecycle --
@@ -59,8 +71,12 @@ namespace TreeFrogAdventure.Core
             Lives = StartingLives;
             Coins = 0;
             Flies = 0;
+            Crystals = 0;
+            SecretsThisLevel = 0;
             ClearCheckpoint();
 
+            OnCrystalsChanged?.Invoke(Crystals);
+            OnSecretsChanged?.Invoke(SecretsThisLevel);
             OnLivesChanged?.Invoke(Lives);
             OnCoinsChanged?.Invoke(Coins);
             OnFliesChanged?.Invoke(Flies);
@@ -74,7 +90,10 @@ namespace TreeFrogAdventure.Core
         {
             ClearCheckpoint();
             Flies = Mathf.Max(Flies, startingFlies);
+            SecretsThisLevel = 0;
+
             OnFliesChanged?.Invoke(Flies);
+            OnSecretsChanged?.Invoke(SecretsThisLevel);
         }
 
         // ---------------------------------------------------------------- lives --
@@ -117,6 +136,20 @@ namespace TreeFrogAdventure.Core
             Flies--;
             OnFliesChanged?.Invoke(Flies);
             return true;
+        }
+
+        // ------------------------------------------------------------ crystals --
+
+        public static void AddCrystal(int amount = 1)
+        {
+            Crystals = Mathf.Max(0, Crystals + amount);
+            OnCrystalsChanged?.Invoke(Crystals);
+        }
+
+        public static void AddSecret(int amount = 1)
+        {
+            SecretsThisLevel = Mathf.Max(0, SecretsThisLevel + amount);
+            OnSecretsChanged?.Invoke(SecretsThisLevel);
         }
 
         // ----------------------------------------------------------- checkpoint --

@@ -33,7 +33,12 @@ namespace TreeFrogAdventure.Player
         [SerializeField] private float respawnDelay = 0.8f;
 
         private int _currentHealth;
-        private bool _isInvincible;
+        // An expiry timestamp rather than a bool. With a bool, two overlapping
+        // invincibility windows each clear the flag when THEY finish, so a short
+        // post-hit window could silently cancel a 10s power-up. Comparing against a
+        // timestamp makes overlapping applications extend instead of truncate.
+        private float _invincibleUntil;
+        private Coroutine _blinkRoutine;
         private bool _isRespawning;
         private TMP_FontAsset _font;
 
@@ -42,7 +47,7 @@ namespace TreeFrogAdventure.Player
         private PlayerController _controller;
 
         public int CurrentHealth => _currentHealth;
-        public bool IsInvincible => _isInvincible;
+        public bool IsInvincible => Time.time < _invincibleUntil;
 
         private void Awake()
         {
@@ -58,7 +63,7 @@ namespace TreeFrogAdventure.Player
 
         public void TakeDamage(int amount = 1)
         {
-            if (_isInvincible || IsDead || _isRespawning) return;
+            if (IsInvincible || IsDead || _isRespawning) return;
 
             _currentHealth = Mathf.Max(0, _currentHealth - amount);
             UpdateHealthDisplay();
@@ -69,7 +74,7 @@ namespace TreeFrogAdventure.Player
             }
             else
             {
-                StartCoroutine(InvincibilityRoutine());
+                SetInvincible(invincibilityDuration, blink: true);
             }
         }
 
@@ -127,20 +132,56 @@ namespace TreeFrogAdventure.Player
             else TakeDamage(source.damageAmount);
         }
 
-        private IEnumerator InvincibilityRoutine()
+        /// <summary>
+        /// Grants invincibility for at least <paramref name="duration"/> seconds. Used
+        /// both by the short post-hit window and by the Invincibility power-up.
+        ///
+        /// Only ever extends: a shorter window applied on top of a longer one is
+        /// ignored, so getting hit during a power-up cannot cut it short.
+        /// </summary>
+        public void SetInvincible(float duration, bool blink)
         {
-            _isInvincible = true;
-            float elapsed = 0f;
+            float until = Time.time + Mathf.Max(0f, duration);
+            if (until <= _invincibleUntil) return;
 
-            while (elapsed < invincibilityDuration)
+            _invincibleUntil = until;
+
+            if (!blink) return;
+
+            // Tracked by reference. The old code called
+            // StopCoroutine(nameof(InvincibilityRoutine)), which only stops coroutines
+            // STARTED by string name — it was a silent no-op, leaving an orphaned
+            // routine still toggling the renderer.
+            if (_blinkRoutine != null) StopCoroutine(_blinkRoutine);
+            _blinkRoutine = StartCoroutine(BlinkRoutine());
+        }
+
+        public void ClearInvincibility()
+        {
+            _invincibleUntil = 0f;
+            StopBlinking();
+        }
+
+        private IEnumerator BlinkRoutine()
+        {
+            while (IsInvincible)
             {
                 if (characterRenderer != null) characterRenderer.enabled = !characterRenderer.enabled;
                 yield return new WaitForSeconds(blinkInterval);
-                elapsed += blinkInterval;
             }
 
             if (characterRenderer != null) characterRenderer.enabled = true;
-            _isInvincible = false;
+            _blinkRoutine = null;
+        }
+
+        private void StopBlinking()
+        {
+            if (_blinkRoutine != null)
+            {
+                StopCoroutine(_blinkRoutine);
+                _blinkRoutine = null;
+            }
+            if (characterRenderer != null) characterRenderer.enabled = true;
         }
 
         /// <summary>
@@ -185,8 +226,11 @@ namespace TreeFrogAdventure.Player
         {
             _isRespawning = true;
 
-            StopCoroutine(nameof(InvincibilityRoutine));
-            _isInvincible = false;
+            ClearInvincibility();
+
+            // Death is a clean slate — power-ups do not survive it.
+            var buffs = GetComponent<PlayerBuffs>();
+            if (buffs != null) buffs.ClearAll();
 
             if (characterRenderer != null) characterRenderer.enabled = false;
             if (_controller != null) _controller.enabled = false;
@@ -212,7 +256,7 @@ namespace TreeFrogAdventure.Player
 
             // Brief grace period so you are not instantly re-killed by whatever
             // wandered onto the checkpoint.
-            StartCoroutine(InvincibilityRoutine());
+            SetInvincible(invincibilityDuration, blink: true);
         }
 
         // ---------------------------------------------------------------

@@ -10,6 +10,16 @@ namespace TreeFrogAdventure.Levels
         Fly,
         ExtraLife,
         Health,
+
+        // Timed power-ups. These are handed to PlayerBuffs on the player rather than
+        // run here: Apply() is followed immediately by Destroy(gameObject), so a
+        // coroutine started on the pickup would die with it.
+        SpeedBoost,
+        JumpBoost,
+        Invincibility,
+
+        /// <summary>The story collectible — one hidden per level.</summary>
+        NatureCrystal,
     }
 
     /// <summary>
@@ -82,6 +92,10 @@ namespace TreeFrogAdventure.Levels
 
         private void Apply(PlayerHealth player)
         {
+            PlayerController controller = player != null ? player.GetComponent<PlayerController>() : null;
+            PlayerData data = controller != null ? controller.Data : null;
+            PlayerBuffs buffs = player != null ? player.GetComponent<PlayerBuffs>() : null;
+
             switch (kind)
             {
                 case CollectibleKind.Coin:
@@ -91,12 +105,7 @@ namespace TreeFrogAdventure.Levels
                 case CollectibleKind.Fly:
                 {
                     // Cap comes from PlayerData so ammo capacity lives in one place.
-                    int max = 10;
-                    if (player != null)
-                    {
-                        var controller = player.GetComponent<PlayerController>();
-                        if (controller != null && controller.Data != null) max = controller.Data.maxFlies;
-                    }
+                    int max = data != null ? data.maxFlies : 10;
                     GameSession.AddFlies(amount, max);
                     break;
                 }
@@ -107,6 +116,31 @@ namespace TreeFrogAdventure.Levels
 
                 case CollectibleKind.Health:
                     if (player != null) player.Heal(amount);
+                    break;
+
+                case CollectibleKind.SpeedBoost:
+                    if (buffs != null && data != null)
+                        buffs.Apply(BuffKind.SpeedBoost, data.speedBoostDuration);
+                    break;
+
+                case CollectibleKind.JumpBoost:
+                    if (buffs != null && data != null)
+                        buffs.Apply(BuffKind.JumpBoost, data.jumpBoostDuration);
+                    break;
+
+                case CollectibleKind.Invincibility:
+                    if (buffs != null && data != null)
+                        buffs.Apply(BuffKind.Invincibility, data.invincibilityPowerUpDuration);
+                    break;
+
+                case CollectibleKind.NatureCrystal:
+                    GameSession.AddCrystal(amount);
+                    // Crystals are the story item, so record them immediately rather
+                    // than waiting for the level to be completed — finding one and then
+                    // dying should not lose it.
+                    SaveSystem.RecordCrystal(LevelContext.Current != null
+                        ? LevelContext.Current.LevelNumber
+                        : 0);
                     break;
             }
         }

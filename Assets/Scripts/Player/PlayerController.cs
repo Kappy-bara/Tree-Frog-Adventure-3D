@@ -23,21 +23,52 @@ namespace TreeFrogAdventure.Player
         private bool _hasUsedDoubleJump;
 
         private bool _isWallSliding;
+        private PlayerSwim _swim;
+        private InputAction _climbAction;
+        private float _wallClimbStamina;
+        private bool _isWallClimbing;
         private Vector3 _wallNormal;
         private float _wallJumpLockTimer;
 
         public PlayerData Data => _playerData;
         public bool HasUsedDoubleJump { get => _hasUsedDoubleJump; set => _hasUsedDoubleJump = value; }
 
+        /// <summary>Current velocity. Read-only — write through ApplyExternalVelocity.</summary>
+        public Vector3 Velocity => _velocity;
+
+        /// <summary>True while climbing rather than sliding down a wall.</summary>
+        public bool IsWallClimbing => _isWallClimbing;
+
+        // Power-up multipliers live here, NOT on PlayerData: PlayerData is a
+        // ScriptableObject, so writing to it at runtime persists into the asset and
+        // the boost would still be applied next time you press Play.
+        public float SpeedMultiplier { get; set; } = 1f;
+        public float JumpMultiplier { get; set; } = 1f;
+
+        /// <summary>Run speed including any active Speed Boost.</summary>
+        public float RunSpeed => _playerData.runSpeed * SpeedMultiplier;
+
+        /// <summary>Jump force including any active Jump Boost. Used by other
+        /// components too, so a boost applies to grapple-cancel and vine jumps.</summary>
+        public float JumpForce => _playerData.jumpForce * JumpMultiplier;
+
+        public float DoubleJumpForce => _playerData.doubleJumpForce * JumpMultiplier;
+
         private void Start()
         {
             _cc = GetComponent<CharacterController>();
             _tongueGrapple = GetComponent<TongueGrapple>();
             _vineClimb = GetComponent<VineClimb>();
+            _swim = GetComponent<PlayerSwim>();
+            _wallClimbStamina = _playerData != null ? _playerData.wallClimbStamina : 0f;
 
             var playerInput = GetComponent<PlayerInput>();
             _moveAction = playerInput.actions.FindAction("Move");
             _jumpAction = playerInput.actions.FindAction("Jump");
+
+            // Sprint is bound (Shift / left stick press) but was never read by anything.
+            // Reusing it as the wall-climb hold avoids adding a new binding.
+            _climbAction = playerInput.actions.FindAction("Sprint");
 
             if (Camera.main != null)
             {
@@ -61,6 +92,12 @@ namespace TreeFrogAdventure.Player
                 return;
             }
 
+            // PlayerSwim owns movement and gravity while in water
+            if (_swim != null && _swim.IsSwimming)
+            {
+                return;
+            }
+
             if (_wallJumpLockTimer > 0f) _wallJumpLockTimer -= Time.deltaTime;
 
             HandleWallDetection();
@@ -72,7 +109,16 @@ namespace TreeFrogAdventure.Player
                 return;
             }
 
-            frogVisuals.SetWallSliding(false, Vector3.zero);
+            if (frogVisuals != null) frogVisuals.SetWallSliding(false, Vector3.zero);
+
+            // Off the wall: recover climb stamina while grounded.
+            _isWallClimbing = false;
+            if (_cc.isGrounded && _playerData != null)
+            {
+                _wallClimbStamina = Mathf.Min(
+                    _playerData.wallClimbStamina,
+                    _wallClimbStamina + _playerData.wallClimbRegenRate * Time.deltaTime);
+            }
 
             // Skip normal horizontal control briefly after a wall jump so the push-off velocity
             // isn't instantly overwritten by input still held toward the wall — otherwise the
@@ -115,8 +161,8 @@ namespace TreeFrogAdventure.Player
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, _playerData.rotationSpeed * Time.deltaTime);
             }
 
-            _velocity.x = moveDir.x * _playerData.runSpeed;
-            _velocity.z = moveDir.z * _playerData.runSpeed;
+            _velocity.x = moveDir.x * RunSpeed;
+            _velocity.z = moveDir.z * RunSpeed;
         }
 
         private void HandleWallDetection()
@@ -175,9 +221,27 @@ namespace TreeFrogAdventure.Player
             Vector3 intoWall = -_wallNormal * 2f;
             _velocity.x = intoWall.x;
             _velocity.z = intoWall.z;
-            _velocity.y = Mathf.Max(_velocity.y + _playerData.gravity * Time.deltaTime, _playerData.wallSlideSpeed);
 
-            frogVisuals.SetWallSliding(true, _wallNormal);
+            // Holding the climb button while pressed against a wall climbs it instead
+            // of sliding down. Stamina-limited, so a wall is a traversal puzzle rather
+            // than a free ladder to anywhere — the wall-jump lock exists for the same
+            // reason (see the comment in Update).
+            bool wantsClimb = _climbAction != null && _climbAction.IsPressed();
+            _isWallClimbing = wantsClimb && _wallClimbStamina > 0f;
+
+            if (_isWallClimbing)
+            {
+                _wallClimbStamina -= Time.deltaTime;
+                _velocity.y = _playerData.wallClimbSpeed;
+            }
+            else
+            {
+                _velocity.y = Mathf.Max(
+                    _velocity.y + _playerData.gravity * Time.deltaTime,
+                    _playerData.wallSlideSpeed);
+            }
+
+            if (frogVisuals != null) frogVisuals.SetWallSliding(true, _wallNormal);
 
             if (_jumpAction != null && _jumpAction.WasPressedThisFrame())
             {
@@ -190,8 +254,8 @@ namespace TreeFrogAdventure.Player
             _velocity = _wallNormal * _playerData.wallJumpAwayForce + Vector3.up * _playerData.wallJumpUpForce;
             transform.rotation = Quaternion.LookRotation(_wallNormal);
 
-            frogVisuals.TriggerProceduralWallJump(_wallNormal);
-            frogVisuals.SetWallSliding(false, Vector3.zero);
+            if (frogVisuals != null) frogVisuals.TriggerProceduralWallJump(_wallNormal);
+            if (frogVisuals != null) frogVisuals.SetWallSliding(false, Vector3.zero);
 
             _hasUsedDoubleJump = false;
             _isWallSliding = false;
@@ -206,13 +270,13 @@ namespace TreeFrogAdventure.Player
             {
                 if (_cc.isGrounded)
                 {
-                    _velocity.y = _playerData.jumpForce;
+                    _velocity.y = JumpForce;
                 }
                 else if (!_hasUsedDoubleJump)
                 {
-                    frogVisuals.TriggerProceduralDoubleJump();
+                    if (frogVisuals != null) frogVisuals.TriggerProceduralDoubleJump();
                     _hasUsedDoubleJump = true;
-                    _velocity.y = _playerData.doubleJumpForce;
+                    _velocity.y = DoubleJumpForce;
                 }
             }
         }

@@ -5,38 +5,78 @@ using UnityEngine.InputSystem;
 namespace TreeFrogAdventure.Player
 {
     /// <summary>
-    /// Simple 3rd Person Follow Camera.
-    /// Orbits around the target using mouse input.
+    /// Third-person orbit camera.
+    ///
+    /// Two things this fixes over the original:
+    ///
+    /// 1. It reads the bound "Look" action instead of Mouse.current directly, so the
+    ///    gamepad right stick works. The action was fully bound (gamepad stick, pointer
+    ///    delta, joystick hat) and read by nothing.
+    ///
+    /// 2. It sweeps for geometry between the player and the camera and pulls in on a
+    ///    hit. Previously the position was snapped with no occlusion test at all, so the
+    ///    camera sat inside walls — which wall climbing makes constant, since climbing
+    ///    presses the player flat against geometry by definition.
     /// </summary>
     public class CameraController : MonoBehaviour
     {
-        [Header("Target")]
-        [Tooltip("The transform the camera should follow (usually the Player).")]
+        [Tooltip("Usually the Player. Found by tag if left empty.")]
         public Transform Target;
 
-        [Header("Settings")]
         public float distance = 5f;
         public float height = 2f;
         public float rotationSpeed = 1f;
         public float minPitch = -20f;
         public float maxPitch = 60f;
 
+        [Header("Sensitivity")]
+        [Tooltip("Mouse delta is measured in pixels per frame, gamepad sticks in -1..1 " +
+                 "per second, so the two need separate scales or one is unusable.")]
+        [SerializeField] private float mouseSensitivity = 0.1f;
+        [SerializeField] private float gamepadSensitivity = 220f;
+
+        [Header("Collision")]
+        [SerializeField] private bool avoidGeometry = true;
+
+        [Tooltip("Layers the camera will not sit inside.")]
+        [SerializeField] private LayerMask occluderLayers = (1 << 0) | (1 << 15);
+
+        [Tooltip("Keeps the near plane out of the surface it pulls up against.")]
+        [SerializeField] private float collisionPadding = 0.3f;
+
+        [Tooltip("How fast the camera returns to full distance once unblocked. " +
+                 "Pulling in is instant so the view never clips.")]
+        [SerializeField] private float returnSpeed = 6f;
+
+        [Header("Smoothing")]
+        [Tooltip("0 disables position smoothing.")]
+        [SerializeField] private float positionSmoothing = 12f;
+
         private float _yaw;
         private float _pitch;
+        private float _currentDistance;
+        private InputAction _lookAction;
 
         private void Start()
         {
             if (Target == null)
             {
-                var player = GameObject.FindWithTag("Player");
+                GameObject player = GameObject.FindWithTag("Player");
                 if (player != null) Target = player.transform;
             }
 
             Vector3 angles = transform.eulerAngles;
             _yaw = angles.y;
             _pitch = angles.x;
+            _currentDistance = distance;
 
-            // Lock cursor
+            // PlayerInput lives on the Player, not on the camera.
+            if (Target != null)
+            {
+                var input = Target.GetComponentInParent<PlayerInput>();
+                if (input != null) _lookAction = input.actions.FindAction("Look");
+            }
+
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
         }
@@ -45,24 +85,74 @@ namespace TreeFrogAdventure.Player
         {
             if (Target == null || PauseMenuController.IsPaused || PlayerHealth.IsDead) return;
 
-            // Read mouse input directly (New Input System)
-            Vector2 lookInput = Vector2.zero;
-            if (Mouse.current != null)
+            ApplyLook();
+
+            Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
+            Vector3 pivot = Target.position + Vector3.up * height;
+
+            float desired = ResolveDistance(pivot, rotation);
+            Vector3 position = pivot - rotation * Vector3.forward * desired;
+
+            transform.position = positionSmoothing > 0f
+                ? Vector3.Lerp(transform.position, position, 1f - Mathf.Exp(-positionSmoothing * Time.deltaTime))
+                : position;
+
+            transform.rotation = rotation;
+        }
+
+        private void ApplyLook()
+        {
+            Vector2 look = Vector2.zero;
+            float scale = mouseSensitivity;
+
+            if (_lookAction != null)
             {
-                lookInput = Mouse.current.delta.ReadValue();
+                look = _lookAction.ReadValue<Vector2>();
+
+                // A stick reports a held position, not a per-frame delta, so it has to
+                // be integrated over time or it barely moves at high framerates.
+                if (_lookAction.activeControl?.device is Gamepad)
+                {
+                    scale = gamepadSensitivity * Time.deltaTime;
+                }
+            }
+            else if (Mouse.current != null)
+            {
+                look = Mouse.current.delta.ReadValue();
             }
 
-            _yaw += lookInput.x * rotationSpeed * 0.1f;
-            _pitch -= lookInput.y * rotationSpeed * 0.1f;
+            _yaw += look.x * rotationSpeed * scale;
+            _pitch -= look.y * rotationSpeed * scale;
             _pitch = Mathf.Clamp(_pitch, minPitch, maxPitch);
+        }
 
-            // Calculate rotation and position
-            Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
-            Vector3 position = Target.position + Vector3.up * height - rotation * Vector3.forward * distance;
+        /// <summary>
+        /// Sweeps from the player out to the camera; on a hit, sits just in front of it.
+        /// Snaps in immediately but eases back out, because a slow pull-in would let the
+        /// camera spend a moment inside the wall.
+        /// </summary>
+        private float ResolveDistance(Vector3 pivot, Quaternion rotation)
+        {
+            if (!avoidGeometry)
+            {
+                _currentDistance = distance;
+                return distance;
+            }
 
-            // Apply to camera
-            transform.position = position;
-            transform.rotation = rotation;
+            Vector3 direction = -(rotation * Vector3.forward);
+            float target = distance;
+
+            if (Physics.SphereCast(pivot, collisionPadding, direction, out RaycastHit hit,
+                                   distance, occluderLayers, QueryTriggerInteraction.Ignore))
+            {
+                target = Mathf.Max(0.2f, hit.distance - collisionPadding * 0.5f);
+            }
+
+            _currentDistance = target < _currentDistance
+                ? target
+                : Mathf.MoveTowards(_currentDistance, target, returnSpeed * Time.deltaTime);
+
+            return _currentDistance;
         }
     }
 }

@@ -119,5 +119,69 @@ namespace TreeFrogAdventure.Player
 
         [Tooltip("Layers a thrown fly collides with (enemies + world)")]
         public LayerMask flyHitLayers = (1 << 0) | (1 << 11) | (1 << 15);
+
+        // ───────────────────────────── Wall Climbing ───────────────────────────────
+        // Distinct from the climbSpeed above, which belongs to VINE climbing.
+
+        [Header("Wall Climbing")]
+        [Tooltip("Upward speed while climbing a wall. Replaces the wall-slide fall.")]
+        public float wallClimbSpeed = 3.2f;
+
+        [Tooltip("Seconds of continuous climbing before the frog tires and starts sliding.")]
+        public float wallClimbStamina = 1.8f;
+
+        [Tooltip("Stamina recovered per second while grounded.")]
+        public float wallClimbRegenRate = 1.2f;
+
+        // ─────────────────────────────── Swimming ──────────────────────────────────
+
+        [Header("Swimming")]
+        [Tooltip("Horizontal swim speed. Usually slower than running.")]
+        public float swimSpeed = 4.5f;
+
+        [Tooltip("Upward speed while holding Jump underwater.")]
+        public float swimUpSpeed = 4f;
+
+        [Tooltip("Gravity while submerged. Much weaker than air gravity.")]
+        public float waterGravity = -3f;
+
+        [Tooltip("Velocity damping per second in water — this is what makes water feel heavy.")]
+        [Range(0f, 10f)]
+        public float waterDrag = 3f;
+
+        [Tooltip("Upward push applied when below the surface, scaled by depth. " +
+                 "Above ~1 the frog bobs back up on its own.")]
+        public float buoyancy = 6f;
+
+        [Tooltip("How far the frog's centre sits below the surface when floating at rest.")]
+        public float swimFloatDepth = 0.35f;
+
+        [Tooltip("Upward velocity when jumping out of water at the surface.")]
+        public float waterExitJumpForce = 7f;
+
+        [Tooltip("Layers treated as swimmable water. Layer 4 by default.")]
+        public LayerMask waterLayers = 1 << 4;
+
+        // ─────────────────────────────── Power-Ups ─────────────────────────────────
+        // Magnitudes only. These are never written to at runtime — PlayerData is a
+        // ScriptableObject, so a runtime write persists into the asset between play
+        // sessions. Multipliers live on PlayerController instead.
+
+        [Header("Power-Ups")]
+        [Tooltip("Run speed multiplier while Speed Boost is active.")]
+        public float speedBoostMultiplier = 1.6f;
+
+        [Tooltip("Seconds a Speed Boost lasts.")]
+        public float speedBoostDuration = 8f;
+
+        [Tooltip("Jump force multiplier while Jump Boost is active.")]
+        public float jumpBoostMultiplier = 1.45f;
+
+        [Tooltip("Seconds a Jump Boost lasts.")]
+        public float jumpBoostDuration = 8f;
+
+        [Tooltip("Seconds an Invincibility power-up lasts. Separate from the short " +
+                 "post-hit invincibility window on PlayerHealth.")]
+        public float invincibilityPowerUpDuration = 10f;
     }
 }

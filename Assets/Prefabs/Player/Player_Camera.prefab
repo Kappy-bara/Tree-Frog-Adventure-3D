@@ -555,6 +555,15 @@ MonoBehaviour:
   rotationSpeed: 1
   minPitch: -20
   maxPitch: 60
+  mouseSensitivity: 0.1
+  gamepadSensitivity: 220
+  avoidGeometry: 1
+  occluderLayers:
+    serializedVersion: 2
+    m_Bits: 32769
+  collisionPadding: 0.3
+  returnSpeed: 6
+  positionSmoothing: 12
 --- !u!1 &4515325417749561602
 GameObject:
   m_ObjectHideFlags: 0
@@ -1308,6 +1317,8 @@ GameObject:
   - component: {fileID: 8812340541706514161}
   - component: {fileID: 2891001253078893073}
   - component: {fileID: 3016964522917236179}
+  - component: {fileID: 3813483358367045025}
+  - component: {fileID: 5876279958069281275}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -1488,6 +1499,30 @@ MonoBehaviour:
   muzzle: {fileID: 1827127472307682115}
   aimCamera: {fileID: 962129047492621707}
   aimDistance: 60
+--- !u!114 &3813483358367045025
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8108825387034121183}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76b345c3dee85dd4abdd07953ce8bb88, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TreeFrogAdventure.Player.PlayerSwim
+--- !u!114 &5876279958069281275
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8108825387034121183}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d4088b2d2eaa064486257cd29952f28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TreeFrogAdventure.Player.PlayerBuffs
 --- !u!1 &8126632240583940404
 GameObject:
   m_ObjectHideFlags: 0

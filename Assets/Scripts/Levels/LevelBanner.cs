@@ -43,6 +43,13 @@ namespace TreeFrogAdventure.Levels
             StartCoroutine(ShowCard("Level Complete", $"Coins {GameSession.Coins}", hold, 0));
         }
 
+        /// <summary>Generic card — used by SecretArea, and available for any other
+        /// one-off announcement.</summary>
+        public void ShowMessage(string title, string subtitle, float hold)
+        {
+            StartCoroutine(ShowCard(title, subtitle, hold, 0));
+        }
+
         private IEnumerator ShowCard(string title, string subtitle, float hold, int world)
         {
             _font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");

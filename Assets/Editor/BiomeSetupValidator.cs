@@ -2,7 +2,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using TreeFrogAdventure.Core;
 using TreeFrogAdventure.Enemies;
+using TreeFrogAdventure.Hazards;
+using TreeFrogAdventure.Levels;
 using TreeFrogAdventure.Menu;
 using TreeFrogAdventure.Player;
 using TreeFrogAdventure.UI;
@@ -43,6 +46,7 @@ namespace TreeFrogAdventure.EditorTools
             CheckSceneFiles();
             CheckEnvironmentScenes();
             CheckGameplaySetup();
+            CheckMovementAndSave();
 
             _sb.AppendLine();
             _sb.AppendLine($"RESULT: {_fail} failure(s), {_warn} warning(s)");
@@ -60,6 +64,115 @@ namespace TreeFrogAdventure.EditorTools
         private static void Pass(string msg) => _sb.AppendLine("  PASS  " + msg);
         private static void Fail(string msg) { _sb.AppendLine("  FAIL  " + msg); _fail++; }
         private static void Warn(string msg) { _sb.AppendLine("  WARN  " + msg); _warn++; }
+
+        // ------------------------------------------------------------------
+        private static void CheckMovementAndSave()
+        {
+            _sb.AppendLine("[7] Movement, power-ups and save");
+
+            // --- water --------------------------------------------------------
+            const string waterRoot = "Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Water/Prefabs";
+            int waterLayer = LayerMask.NameToLayer("Water");
+
+            foreach (string name in new[] { "UNS_Water_Flat", "UNS_Water_Detailed" })
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{waterRoot}/{name}.prefab");
+                if (prefab == null) { Fail($"missing water prefab: {name}"); continue; }
+
+                bool onLayer = prefab.layer == waterLayer;
+                var volume = prefab.GetComponent<WaterVolume>();
+                var col = prefab.GetComponent<Collider>();
+                bool isTrigger = col != null && col.isTrigger;
+                bool noMesh = prefab.GetComponentInChildren<MeshCollider>(true) == null;
+
+                if (onLayer && volume != null && isTrigger && noMesh)
+                    Pass($"{name} is a swimmable trigger volume on the Water layer");
+                else
+                    Fail($"{name} not swimmable — layer:{onLayer} volume:{volume != null} " +
+                         $"trigger:{isTrigger} meshColliderRemoved:{noMesh}");
+            }
+
+            // --- player components --------------------------------------------
+            var player = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player_Camera.prefab");
+            if (player == null)
+            {
+                Fail("Player_Camera.prefab not found");
+            }
+            else
+            {
+                if (player.GetComponentInChildren<PlayerSwim>(true) != null) Pass("player has PlayerSwim");
+                else Fail("player is missing PlayerSwim");
+
+                if (player.GetComponentInChildren<PlayerBuffs>(true) != null) Pass("player has PlayerBuffs");
+                else Fail("player is missing PlayerBuffs");
+            }
+
+            // --- PlayerData ----------------------------------------------------
+            var data = AssetDatabase.LoadAssetAtPath<PlayerData>("Assets/ScriptableObjects/PlayerData.asset");
+            if (data == null)
+            {
+                Fail("PlayerData.asset not found");
+            }
+            else
+            {
+                if ((data.waterLayers.value & (1 << waterLayer)) != 0)
+                    Pass("PlayerData.waterLayers includes the Water layer");
+                else
+                    Fail($"PlayerData.waterLayers ({data.waterLayers.value}) excludes Water — swimming will never trigger");
+
+                if (data.wallClimbSpeed > 0f && data.wallClimbStamina > 0f) Pass("wall climb is tuned");
+                else Fail("wallClimbSpeed / wallClimbStamina are zero — climbing does nothing");
+
+                if (data.speedBoostMultiplier > 1f && data.jumpBoostMultiplier > 1f)
+                    Pass("power-up multipliers are above 1");
+                else
+                    Fail("power-up multipliers are <= 1 — the boosts would do nothing");
+            }
+
+            // --- pickup prefabs ------------------------------------------------
+            foreach (string name in new[]
+                     {
+                         "Pickup_Coin", "Pickup_Fly", "Pickup_ExtraLife", "Pickup_Health",
+                         "Pickup_SpeedBoost", "Pickup_JumpBoost", "Pickup_Invincibility",
+                         "Pickup_NatureCrystal",
+                     })
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Pickups/{name}.prefab");
+                if (prefab == null) { Fail($"missing pickup prefab: {name}"); continue; }
+
+                var collectible = prefab.GetComponent<Collectible>();
+                var col = prefab.GetComponent<Collider>();
+
+                if (collectible != null && col != null && col.isTrigger) Pass($"{name} wired");
+                else Fail($"{name} incomplete — collectible:{collectible != null} trigger:{col != null && col.isTrigger}");
+            }
+
+            // --- save round trip ------------------------------------------------
+            // Serialisation only, deliberately not touching the real save file:
+            // JsonUtility silently drops types it cannot handle, and List<LevelRecord>
+            // is the part worth proving.
+            var probe = new SaveData { highestUnlockedLevel = 7, totalCoins = 123 };
+            LevelRecord record = probe.GetOrCreate(3);
+            record.completed = true;
+            record.crystalFound = true;
+            record.secretsFound = 2;
+            record.bestTimeSeconds = 41.5f;
+
+            var restored = JsonUtility.FromJson<SaveData>(JsonUtility.ToJson(probe));
+            LevelRecord back = restored?.Find(3);
+
+            if (restored != null && restored.highestUnlockedLevel == 7 && restored.totalCoins == 123 &&
+                back != null && back.completed && back.crystalFound && back.secretsFound == 2)
+            {
+                Pass("SaveData round-trips through JsonUtility (per-level records included)");
+            }
+            else
+            {
+                Fail("SaveData did not round-trip — saved progress would be lost");
+            }
+
+            _sb.AppendLine();
+        }
 
         // ------------------------------------------------------------------
         private static void CheckGameplaySetup()

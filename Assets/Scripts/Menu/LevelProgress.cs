@@ -1,9 +1,11 @@
+using TreeFrogAdventure.Core;
 using UnityEngine;
 
 namespace TreeFrogAdventure.Menu
 {
     /// <summary>
-    /// Static save/progress API for level unlocks. Persisted via PlayerPrefs.
+    /// Static progress API for level unlocks and biome/scene naming.
+    /// Persistence lives in <see cref="SaveSystem"/> (JSON in persistentDataPath).
     /// </summary>
     public static class LevelProgress
     {
@@ -12,8 +14,6 @@ namespace TreeFrogAdventure.Menu
         public const int TotalWorlds = 4;
         public const int LevelsPerWorld = 5;
         public const int TotalLevels = TotalWorlds * LevelsPerWorld;
-
-        private const string HighestUnlockedKey = "LevelProgress_HighestUnlocked";
 
         /// <summary>One environment scene per world, indexed by world - 1.</summary>
         private static readonly string[] BiomeEnvironmentScenes =
@@ -32,8 +32,11 @@ namespace TreeFrogAdventure.Menu
             "Volcanic Highlands",
         };
 
+        // Backed by SaveSystem's JSON file now, not PlayerPrefs. The old
+        // LevelProgress_HighestUnlocked key is migrated across once on first load, so
+        // existing players keep their progress.
         public static int HighestUnlockedLevel =>
-            Mathf.Clamp(PlayerPrefs.GetInt(HighestUnlockedKey, 1), 1, TotalLevels);
+            Mathf.Clamp(SaveSystem.Data.highestUnlockedLevel, 1, TotalLevels);
 
         public static bool IsLevelUnlocked(int levelNumber)
         {
@@ -48,8 +51,7 @@ namespace TreeFrogAdventure.Menu
         {
             if (levelNumber == HighestUnlockedLevel && levelNumber < TotalLevels)
             {
-                PlayerPrefs.SetInt(HighestUnlockedKey, levelNumber + 1);
-                PlayerPrefs.Save();
+                SaveSystem.SetHighestUnlocked(levelNumber + 1);
             }
         }
 
@@ -86,9 +88,14 @@ namespace TreeFrogAdventure.Menu
             return BiomeDisplayNames[Mathf.Clamp(world - 1, 0, BiomeDisplayNames.Length - 1)];
         }
 
+        /// <summary>
+        /// Wipes all saved progress. Previously this deleted the PlayerPrefs key
+        /// without calling Save(), unlike CompleteLevel — so a reset could silently
+        /// fail to stick if the process ended before Unity flushed prefs.
+        /// </summary>
         public static void ResetProgress()
         {
-            PlayerPrefs.DeleteKey(HighestUnlockedKey);
+            SaveSystem.ResetAll();
         }
     }
 }

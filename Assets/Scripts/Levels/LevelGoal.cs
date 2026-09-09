@@ -1,4 +1,5 @@
 using System.Collections;
+using TreeFrogAdventure.Core;
 using TreeFrogAdventure.Menu;
 using TreeFrogAdventure.Player;
 using UnityEngine;
@@ -22,6 +23,9 @@ namespace TreeFrogAdventure.Levels
         [SerializeField] private bool loadNextAutomatically = true;
 
         private bool _triggered;
+        private float _levelStartTime;
+
+        private void Start() => _levelStartTime = Time.time;
 
         private void Reset()
         {
@@ -49,6 +53,9 @@ namespace TreeFrogAdventure.Levels
             }
 
             LevelProgress.CompleteLevel(level);
+
+            SaveSystem.RecordCompletion(level, Time.time - _levelStartTime, GameSession.Coins);
+            SaveSystem.RecordSecrets(level, GameSession.SecretsThisLevel);
 
             // Optional: a LevelBanner on LevelSystems shows the completion card.
             var banner = FindAnyObjectByType<LevelBanner>();
