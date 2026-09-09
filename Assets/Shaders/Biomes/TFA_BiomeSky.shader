@@ -151,7 +151,7 @@ Shader "TreeFrogAdventure/Biome/Sky"
                 uv *= _CloudScale;
 
                 float2 drift = normalize(_CloudDirection.xy + float2(1.0e-4, 0.0));
-                uv += drift * (_Time.y * _CloudSpeed * 60.0);
+                uv += drift * (TFA_AnimTime() * _CloudSpeed * 60.0);
 
                 float c = TFA_WarpedFBM2(uv, _CloudWarp);
                 float cover = smoothstep(_CloudCoverage, _CloudCoverage + _CloudSoftness, c);

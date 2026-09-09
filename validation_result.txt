@@ -1,0 +1,44 @@
+=== TREE FROG SETUP VALIDATION ===
+
+[1] LevelProgress constants
+  PASS  TotalWorlds = 4
+  PASS  TotalLevels = 20
+
+[2] Build Settings
+  PASS  no duplicate entries (25 total)
+  PASS  index 0 is MainMenu
+
+[3] Level -> scene resolution (all 20 levels)
+  PASS  every level resolves to a registered environment + gameplay scene
+
+      biome grouping (5 levels sharing 1 environment = no duplication):
+      [OK ] Env_EmeraldForest        levels 1-5    (5 levels)
+      [OK ] Env_CanopyHeights        levels 6-10   (5 levels)
+      [OK ] Env_MistySwamp           levels 11-15  (5 levels)
+      [OK ] Env_VolcanicHighlands    levels 16-20  (5 levels)
+  PASS  exactly 4 distinct environment scenes for 20 levels
+
+[4] Scene files on disk
+  PASS  20 gameplay scenes = 1.0 MB, 4 environment scenes = 167.7 MB
+      copying each biome 5x would have been ~838 MB (saved ~670 MB)
+
+[5] Environment scene contents
+      Env_EmeraldForest: 26828 renderers, 33052 biome-material slots, 5 terrains, skybox 'EF_Skybox'
+  PASS  Env_EmeraldForest: all biome materials use the EF_* set
+  PASS  Env_EmeraldForest: no gameplay objects left in the environment
+  PASS  Env_EmeraldForest: skybox is EF_Skybox
+      Env_CanopyHeights: 26828 renderers, 33052 biome-material slots, 5 terrains, skybox 'CH_Skybox'
+  PASS  Env_CanopyHeights: all biome materials use the CH_* set
+  PASS  Env_CanopyHeights: no gameplay objects left in the environment
+  PASS  Env_CanopyHeights: skybox is CH_Skybox
+      Env_MistySwamp: 26828 renderers, 33052 biome-material slots, 5 terrains, skybox 'MS_Skybox'
+  PASS  Env_MistySwamp: all biome materials use the MS_* set
+  PASS  Env_MistySwamp: no gameplay objects left in the environment
+  PASS  Env_MistySwamp: skybox is MS_Skybox
+      Env_VolcanicHighlands: 26828 renderers, 33052 biome-material slots, 5 terrains, skybox 'VH_Skybox'
+  PASS  Env_VolcanicHighlands: all biome materials use the VH_* set
+  PASS  Env_VolcanicHighlands: no gameplay objects left in the environment
+  PASS  Env_VolcanicHighlands: skybox is VH_Skybox
+
+
+RESULT: 0 failure(s), 0 warning(s)

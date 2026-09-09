@@ -9,6 +9,29 @@
 // four biomes stay visually consistent and there is one place to tune.
 // -----------------------------------------------------------------------------
 
+// -------------------------------------------------------------- animation ---
+
+// Animation clock for every biome shader.
+//
+// _Time keeps advancing in the editor, so wind, waves and lava animate in the
+// Scene view whenever it repaints - and it repaints on any interaction, even
+// with "Always Refresh" switched off. On a scene of ~6,800 objects that is a
+// lot of wasted work while you are building levels.
+//
+// _TFA_FreezeAnim is a GLOBAL (set via Shader.SetGlobalFloat), deliberately
+// declared outside CBUFFER(UnityPerMaterial) - it is not a material property,
+// so SRP Batcher compatibility is unaffected.
+//
+// The polarity is fail-safe: an unset global reads as 0, meaning "do not
+// freeze". Animation therefore works normally in play mode and in builds even
+// if nothing ever assigns it. Only the editor script raises it to 1.
+float _TFA_FreezeAnim;
+
+float TFA_AnimTime()
+{
+    return _Time.y * (1.0 - saturate(_TFA_FreezeAnim));
+}
+
 // ---------------------------------------------------------------- hashing ----
 
 float TFA_Hash11(float p)
@@ -176,7 +199,7 @@ float TFA_HeightMask(float y, float bottom, float top)
 
 float TFA_Pulse(float speed, float phase)
 {
-    return 0.5 + 0.5 * sin(_Time.y * speed + phase);
+    return 0.5 + 0.5 * sin(TFA_AnimTime() * speed + phase);
 }
 
 // -------------------------------------------------------------------- wind ---
@@ -188,7 +211,7 @@ float3 TFA_WindOffset(float3 positionWS, float mask, float4 windParams, float3 w
     if (mask <= 0.0 || windParams.x <= 0.0)
         return float3(0.0, 0.0, 0.0);
 
-    float t = _Time.y * windParams.y;
+    float t = TFA_AnimTime() * windParams.y;
     float phase = dot(positionWS.xz, float2(0.35, 0.27)) * windParams.z;
 
     // Two sines at incommensurable rates so the sway never visibly loops.

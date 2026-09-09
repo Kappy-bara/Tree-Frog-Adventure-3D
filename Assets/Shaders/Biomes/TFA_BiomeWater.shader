@@ -145,7 +145,7 @@ Shader "TreeFrogAdventure/Biome/Water"
             float WaveHeightAt(float2 p)
             {
                 float2 dir = normalize(_WaveDirection.xy + float2(1.0e-4, 0.0));
-                float t = _Time.y * _WaveSpeed;
+                float t = TFA_AnimTime() * _WaveSpeed;
                 float a = TFA_FBM2(p + dir * t);
                 float b = TFA_FBM2(p * 2.3 - dir.yx * (t * 0.8));
                 return a * 0.6 + b * 0.4;
@@ -229,7 +229,7 @@ Shader "TreeFrogAdventure/Biome/Water"
 
                 // --- shore foam ----------------------------------------------
                 float foamNoise = TFA_FBM2(input.positionWS.xz * _FoamScale
-                                           + _Time.y * _FoamSpeed * float2(0.6, -0.4));
+                                           + TFA_AnimTime() * _FoamSpeed * float2(0.6, -0.4));
                 float foamWidth = _FoamDistance * (0.55 + foamNoise * 0.9);
                 float foam = 1.0 - smoothstep(0.0, max(foamWidth, 1.0e-4), waterDepth);
                 foam = smoothstep(_FoamCutoff, 1.0, foam) * _FoamColor.a;
@@ -256,7 +256,7 @@ Shader "TreeFrogAdventure/Biome/Water"
                 if (max(_EmissionColor.r, max(_EmissionColor.g, _EmissionColor.b)) > 0.0)
                 {
                     float n = TFA_FBM2(input.positionWS.xz * _EmissionScale
-                                       + _Time.y * 0.05 * float2(0.3, 0.2));
+                                       + TFA_AnimTime() * 0.05 * float2(0.3, 0.2));
                     float m = smoothstep(_EmissionThreshold, _EmissionThreshold + 0.12, n);
                     emission = _EmissionColor.rgb * m * TFA_Pulse(_EmissionPulseSpeed, n * 6.28);
                 }

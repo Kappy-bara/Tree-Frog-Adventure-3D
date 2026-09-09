@@ -100,7 +100,7 @@ Shader "TreeFrogAdventure/Biome/Lava"
         {
             float2 p = worldXZ * _FlowScale;
             float2 dir = normalize(_FlowDirection.xy + float2(1.0e-4, 0.0));
-            float t = _Time.y * _FlowSpeed;
+            float t = TFA_AnimTime() * _FlowSpeed;
 
             float a = TFA_WarpedFBM2(p + dir * t, _WarpAmount);
             float b = TFA_WarpedFBM2(p * 1.73 - dir.yx * (t * 0.62) + 11.3, _WarpAmount);
