@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e295f871bd8a3e4f9592376f69dc437, type: 3}
+  m_Name: FxCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::TreeFrogAdventure.Fx.FxCatalog
+  entries:
+  - kind: 0
+    prefab: {fileID: 3661364704232119209, guid: 3dabbc99858765b47ad1ec2d3e41f899, type: 3}
+    prewarm: 4
+  - kind: 1
+    prefab: {fileID: 1154496518463130558, guid: 23f46178a090a434c8da8b3e741f3ac8, type: 3}
+    prewarm: 4
+  - kind: 2
+    prefab: {fileID: 5485337129097471278, guid: 7834bc98dba01c64ca0911696c773612, type: 3}
+    prewarm: 6
+  - kind: 3
+    prefab: {fileID: 7384215359069730032, guid: db760076c5d154c478802c85371ee773, type: 3}
+    prewarm: 3
+  - kind: 4
+    prefab: {fileID: 5074380885142093091, guid: 981f6fa7e3e14a240bd806193861c57c, type: 3}
+    prewarm: 3
+  - kind: 5
+    prefab: {fileID: 722482670330415815, guid: ad91a330559c63843a9a9928093ac783, type: 3}
+    prewarm: 2
+  - kind: 6
+    prefab: {fileID: 8977633592975450715, guid: 944d7d982d77dc641977dca7d923507a, type: 3}
+    prewarm: 2

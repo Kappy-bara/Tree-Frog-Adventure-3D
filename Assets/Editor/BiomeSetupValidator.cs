@@ -47,6 +47,7 @@ namespace TreeFrogAdventure.EditorTools
             CheckEnvironmentScenes();
             CheckGameplaySetup();
             CheckMovementAndSave();
+            CheckBossesFxAndContent();
 
             _sb.AppendLine();
             _sb.AppendLine($"RESULT: {_fail} failure(s), {_warn} warning(s)");
@@ -62,6 +63,334 @@ namespace TreeFrogAdventure.EditorTools
         }
 
         private static void Pass(string msg) => _sb.AppendLine("  PASS  " + msg);
+
+        // ------------------------------------------------------------------
+        /// <summary>
+        /// Bosses, effects and the generated level content.
+        ///
+        /// Where section [6] scans the scene files as raw text — and so would pass on
+        /// an object that exists but is broken or disabled — this section opens each
+        /// level and asserts on loaded components.
+        /// </summary>
+        private static void CheckBossesFxAndContent()
+        {
+            _sb.AppendLine();
+            _sb.AppendLine("[8] Bosses, FX and level content");
+
+            CheckBossPrefabs();
+            CheckEnemyHitboxes();
+            CheckFxCatalog();
+            CheckLegacyEnemyRetired();
+            CheckLevelContent();
+        }
+
+        private static void CheckBossPrefabs()
+        {
+            var expected = new[]
+            {
+                "Boss_ForestGuardian",
+                "Boss_CanopyGuardian",
+                "Boss_SwampGuardian",
+                "Boss_VolcanoGuardian",
+            };
+
+            foreach (string name in expected)
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Bosses/{name}.prefab");
+                if (prefab == null) { Fail($"missing boss prefab: {name}"); continue; }
+
+                var boss = prefab.GetComponent<BossBase>();
+                var health = prefab.GetComponent<EnemyHealth>();
+
+                if (boss == null) { Fail($"{name} has no BossBase"); continue; }
+                if (health == null) { Fail($"{name} has no EnemyHealth"); continue; }
+
+                if (health.MaxHealth < 2)
+                {
+                    Fail($"{name} has {health.MaxHealth} HP, too few for its phases");
+                    continue;
+                }
+
+                // Authored stompable would let a lucky jump skip the phase structure
+                // entirely. BossBase opens the stomp window itself, between phases.
+                if (health.Stompable) { Fail($"{name} is authored stompable"); continue; }
+
+                if (prefab.GetComponentInChildren<Fx.EnemyFeedback>(true) == null)
+                {
+                    Warn($"{name} has no EnemyFeedback, so hits on it are silent");
+                }
+
+                Pass($"{name}: {health.MaxHealth} HP, {boss.PhaseCount} phases");
+            }
+
+            var projectile = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/Prefabs/Combat/Boss_Projectile.prefab");
+
+            if (projectile == null || projectile.GetComponent<BossProjectile>() == null)
+            {
+                Fail("Boss_Projectile missing or has no BossProjectile component");
+            }
+            else
+            {
+                Pass("Boss_Projectile wired");
+            }
+        }
+
+        /// <summary>
+        /// Enemy hitboxes must be roughly enemy-sized in WORLD space.
+        ///
+        /// Collider fields are local, so a prefab whose root is scaled — the rigged
+        /// bunny model imports at 200x — multiplies them. Authoring that capsule in
+        /// metres produced a 52 m radius trigger carrying a DamageSource, which damaged
+        /// the player continuously from across the map the moment a level loaded. The
+        /// prefab looked correct in the inspector; only the world size gave it away.
+        /// </summary>
+        private static void CheckEnemyHitboxes()
+        {
+            const float maxReasonable = 6f;
+
+            string[] folders = { "Assets/Prefabs/Enemies", "Assets/Prefabs/Bosses" };
+            int checkedCount = 0;
+
+            foreach (string folder in folders)
+            {
+                if (!Directory.Exists(folder)) continue;
+
+                foreach (string path in Directory.GetFiles(folder, "*.prefab"))
+                {
+                    string assetPath = path.Replace('\\', '/');
+                    var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+
+                    if (prefab == null || prefab.GetComponent<EnemyHealth>() == null) continue;
+
+                    checkedCount++;
+                    float biggest = 0f;
+                    string worst = null;
+
+                    foreach (Collider col in prefab.GetComponentsInChildren<Collider>(true))
+                    {
+                        float size = WorldExtent(col);
+                        if (size <= biggest) continue;
+
+                        biggest = size;
+                        worst = col.GetType().Name;
+                    }
+
+                    var controller = prefab.GetComponent<CharacterController>();
+                    if (controller != null)
+                    {
+                        Vector3 scale = controller.transform.lossyScale;
+                        float lateral = Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z));
+
+                        float size = Mathf.Max(controller.radius * 2f * lateral,
+                                               controller.height * Mathf.Abs(scale.y));
+
+                        if (size > biggest) { biggest = size; worst = "CharacterController"; }
+                    }
+
+                    string name = Path.GetFileNameWithoutExtension(assetPath);
+                    float rootScale = prefab.transform.localScale.x;
+
+                    if (biggest > maxReasonable)
+                    {
+                        Fail($"{name}: {worst} is {biggest:F1} m across in world space " +
+                             $"(root scale {rootScale:F0}x) — collider sizes are local and " +
+                             "must be divided by the root scale");
+                    }
+                    else
+                    {
+                        Pass($"{name}: largest hitbox {biggest:F2} m" +
+                             (Mathf.Abs(rootScale - 1f) > 0.01f ? $" (root scale {rootScale:F0}x)" : string.Empty));
+                    }
+                }
+            }
+
+            if (checkedCount == 0) Warn("no enemy prefabs found to size-check");
+        }
+
+        /// <summary>Largest world-space dimension of a collider on a prefab asset.</summary>
+        private static float WorldExtent(Collider col)
+        {
+            // bounds are unreliable on an asset that was never instantiated, so this
+            // multiplies the authored local size by the transform's lossy scale.
+            Vector3 scale = col.transform.lossyScale;
+            float lateral = Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z));
+
+            switch (col)
+            {
+                case SphereCollider sphere:
+                    return sphere.radius * 2f * Mathf.Max(lateral, Mathf.Abs(scale.y));
+
+                case CapsuleCollider capsule:
+                    return Mathf.Max(capsule.radius * 2f * lateral,
+                                     capsule.height * Mathf.Abs(scale.y));
+
+                case BoxCollider box:
+                    Vector3 world = Vector3.Scale(box.size, scale);
+                    return Mathf.Max(Mathf.Abs(world.x), Mathf.Max(Mathf.Abs(world.y), Mathf.Abs(world.z)));
+
+                default:
+                    return 0f;
+            }
+        }
+
+        private static void CheckFxCatalog()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<Fx.FxCatalog>("Assets/Resources/FxCatalog.asset");
+
+            if (catalog == null)
+            {
+                Fail("no FxCatalog in Assets/Resources; run Tools > Tree Frog > Build FX Prefabs");
+                return;
+            }
+
+            int missing = 0;
+            var kinds = System.Enum.GetValues(typeof(Fx.FxKind));
+
+            // Every enum value must resolve, or that effect silently never plays.
+            foreach (Fx.FxKind kind in kinds)
+            {
+                GameObject prefab = catalog.GetPrefab(kind);
+
+                if (prefab == null) { Fail($"FxCatalog has no prefab for {kind}"); missing++; continue; }
+
+                if (prefab.GetComponentInChildren<ParticleSystem>(true) == null)
+                {
+                    Fail($"FX prefab for {kind} has no ParticleSystem");
+                    missing++;
+                }
+            }
+
+            if (missing == 0) Pass($"FxCatalog resolves all {kinds.Length} effect kinds");
+        }
+
+        private static void CheckLegacyEnemyRetired()
+        {
+            var rigged = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/Prefabs/Enemies/Enemy_Bunny_Rigged.prefab");
+
+            if (rigged == null)
+            {
+                Fail("Enemy_Bunny_Rigged missing; run Tools > Tree Frog > Fix Legacy Prefabs");
+            }
+            else if (rigged.GetComponent<EnemyHealth>() == null)
+            {
+                Fail("Enemy_Bunny_Rigged has no EnemyHealth, so it would be unkillable");
+            }
+            else
+            {
+                Pass("Enemy_Bunny_Rigged is killable and keeps its animation");
+            }
+
+            // The legacy Bunny.prefab has no EnemyHealth at all, so an instance of it in
+            // a level is an enemy that nothing in the game can kill.
+            string legacyGuid = AssetDatabase.AssetPathToGUID("Assets/Prefabs/Enemies/Bunny.prefab");
+            var offenders = new List<string>();
+
+            for (int level = 1; level <= LevelProgress.TotalLevels; level++)
+            {
+                string path = $"Assets/Scenes/Levels/{LevelProgress.GetLevelScene(level)}.unity";
+                if (!File.Exists(path)) continue;
+
+                if (File.ReadAllText(path).Contains(legacyGuid))
+                {
+                    offenders.Add($"Level_{level:00}");
+                }
+            }
+
+            if (offenders.Count > 0)
+            {
+                Fail($"un-killable legacy Bunny.prefab still instanced in: {string.Join(", ", offenders)}");
+            }
+            else
+            {
+                Pass("no level references the un-killable legacy Bunny.prefab");
+            }
+        }
+
+        private static void CheckLevelContent()
+        {
+            for (int level = 1; level <= LevelProgress.TotalLevels; level++)
+            {
+                string levelPath = $"Assets/Scenes/Levels/{LevelProgress.GetLevelScene(level)}.unity";
+                if (!File.Exists(levelPath)) { Fail($"missing level scene: {levelPath}"); continue; }
+
+                // Only the gameplay scene is opened. It holds every component checked
+                // here, and skipping the 44 MB environment keeps this section quick.
+                Scene scene = EditorSceneManager.OpenScene(levelPath, OpenSceneMode.Single);
+                GameObject[] roots = scene.GetRootGameObjects();
+
+                int enemies = roots.Sum(r => r.GetComponentsInChildren<EnemyBase>(true).Length);
+                int pickups = roots.Sum(r => r.GetComponentsInChildren<Collectible>(true).Length);
+                int secrets = roots.Sum(r => r.GetComponentsInChildren<SecretArea>(true).Length);
+                int checkpoints = roots.Sum(r => r.GetComponentsInChildren<Checkpoint>(true).Length);
+
+                int crystals = roots
+                    .SelectMany(r => r.GetComponentsInChildren<Collectible>(true))
+                    .Count(IsCrystal);
+
+                var (_, levelInWorld) = LevelProgress.GetWorldAndLevel(level);
+                bool bossLevel = levelInWorld == LevelProgress.LevelsPerWorld;
+
+                var problems = new List<string>();
+
+                if (enemies == 0) problems.Add("no enemies");
+                if (pickups == 0) problems.Add("no pickups");
+                if (checkpoints == 0) problems.Add("no checkpoint");
+                if (secrets == 0) problems.Add("no secret area");
+
+                if (bossLevel)
+                {
+                    BossArena arena = roots.Select(r => r.GetComponentInChildren<BossArena>(true))
+                                           .FirstOrDefault(a => a != null);
+                    BossBase boss = roots.Select(r => r.GetComponentInChildren<BossBase>(true))
+                                         .FirstOrDefault(b => b != null);
+
+                    if (arena == null) problems.Add("no BossArena");
+                    if (boss == null) problems.Add("no guardian");
+
+                    // A boss level carries no crystal in the scene: the arena spawns it
+                    // where the guardian falls.
+                }
+                else if (crystals != 1)
+                {
+                    problems.Add($"{crystals} Nature Crystals, expected exactly 1");
+                }
+
+                LevelGoal goal = roots.Select(r => r.GetComponentInChildren<LevelGoal>(true))
+                                      .FirstOrDefault(g => g != null);
+
+                if (goal == null)
+                {
+                    problems.Add("no LevelGoal");
+                }
+                else
+                {
+                    var so = new SerializedObject(goal);
+                    if (so.FindProperty("loadNextAutomatically").boolValue)
+                    {
+                        problems.Add("LevelGoal auto-advances, skipping the results screen");
+                    }
+                }
+
+                if (problems.Count > 0)
+                {
+                    Fail($"Level_{level:00}: {string.Join("; ", problems)}");
+                }
+                else
+                {
+                    Pass($"Level_{level:00}: {enemies} enemies, {pickups} pickups, " +
+                         $"{secrets} secret(s), {checkpoints} checkpoint(s)" +
+                         (bossLevel ? ", boss arena" : ", 1 crystal"));
+                }
+            }
+        }
+
+        private static bool IsCrystal(Collectible collectible)
+        {
+            var so = new SerializedObject(collectible);
+            return so.FindProperty("kind").enumValueIndex == (int)CollectibleKind.NatureCrystal;
+        }
         private static void Fail(string msg) { _sb.AppendLine("  FAIL  " + msg); _fail++; }
         private static void Warn(string msg) { _sb.AppendLine("  WARN  " + msg); _warn++; }
 

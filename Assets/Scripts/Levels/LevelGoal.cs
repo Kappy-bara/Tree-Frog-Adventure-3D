@@ -19,8 +19,9 @@ namespace TreeFrogAdventure.Levels
         [Tooltip("Seconds to wait before moving on, so the pickup/landing reads.")]
         [SerializeField] private float delaySeconds = 1f;
 
-        [Tooltip("On completion go straight to the next level. Off returns to the main menu.")]
-        [SerializeField] private bool loadNextAutomatically = true;
+        [Tooltip("Skip the results screen and go straight to the next level. Off (the " +
+                 "default) shows the results and lets the player choose.")]
+        [SerializeField] private bool loadNextAutomatically;
 
         private bool _triggered;
         private float _levelStartTime;
@@ -52,16 +53,50 @@ namespace TreeFrogAdventure.Levels
                 return;
             }
 
+            float elapsed = Time.time - _levelStartTime;
+
+            // Read the record BEFORE recording this run, or the "previous best" the
+            // results screen compares against is the time that was just set.
+            LevelRecord before = SaveSystem.GetLevel(level);
+            float previousBest = before != null ? before.bestTimeSeconds : 0f;
+
             LevelProgress.CompleteLevel(level);
 
-            SaveSystem.RecordCompletion(level, Time.time - _levelStartTime, GameSession.Coins);
+            SaveSystem.RecordCompletion(level, elapsed, GameSession.Coins);
             SaveSystem.RecordSecrets(level, GameSession.SecretsThisLevel);
 
-            // Optional: a LevelBanner on LevelSystems shows the completion card.
-            var banner = FindAnyObjectByType<LevelBanner>();
-            if (banner != null) banner.ShowComplete(delaySeconds);
+            if (loadNextAutomatically)
+            {
+                // Escape hatch for testing a run of levels back to back.
+                var banner = FindAnyObjectByType<LevelBanner>();
+                if (banner != null) banner.ShowComplete(delaySeconds);
 
-            StartCoroutine(Finish(level));
+                StartCoroutine(Finish(level));
+                return;
+            }
+
+            LevelRecord after = SaveSystem.GetLevel(level);
+
+            LevelCompleteScreen.Show(new LevelCompleteScreen.Result
+            {
+                Level = level,
+                TimeSeconds = elapsed,
+                PreviousBestSeconds = previousBest,
+                Coins = GameSession.Coins,
+                SecretsFound = GameSession.SecretsThisLevel,
+                SecretsInLevel = CountSecretsInLevel(),
+                CrystalFound = after != null && after.crystalFound,
+            });
+        }
+
+        /// <summary>
+        /// How many secrets this level holds, so the results screen can show "1 / 3"
+        /// rather than a bare count the player cannot judge. Inactive ones are included:
+        /// a SecretArea may legitimately be disabled until something else reveals it.
+        /// </summary>
+        private static int CountSecretsInLevel()
+        {
+            return FindObjectsByType<SecretArea>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length;
         }
 
         private static bool IsPlayer(Collider other)

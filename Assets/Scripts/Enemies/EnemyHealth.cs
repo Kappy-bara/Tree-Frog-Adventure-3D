@@ -39,7 +39,22 @@ namespace TreeFrogAdventure.Enemies
 
         public int CurrentHealth { get; private set; }
         public bool IsDead { get; private set; }
-        public bool Stompable => stompable;
+
+        /// <summary>Starting hit points. Needed to draw a health bar as a fraction.</summary>
+        public int MaxHealth => Mathf.Max(1, maxHealth);
+
+        /// <summary>How long the corpse lingers, so death effects can match it.</summary>
+        public float DespawnDelay => Mathf.Max(0f, despawnDelay);
+
+        /// <summary>
+        /// Settable so a boss can open and close a stomp window between phases. The
+        /// serialized field remains the authored default.
+        /// </summary>
+        public bool Stompable
+        {
+            get => stompable;
+            set => stompable = value;
+        }
 
         /// <summary>Fired once, when health reaches zero.</summary>
         public event Action<EnemyHealth, DamageKind> OnDeath;

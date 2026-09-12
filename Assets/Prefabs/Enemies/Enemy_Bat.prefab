@@ -101,6 +101,7 @@ GameObject:
   - component: {fileID: 6541826706591909751}
   - component: {fileID: 4212724718527998747}
   - component: {fileID: 6008280493526990562}
+  - component: {fileID: 3132617934320406210}
   - component: {fileID: 124954261779798178}
   - component: {fileID: 7830394393955399663}
   m_Layer: 11
@@ -164,6 +165,21 @@ MonoBehaviour:
   stompDamage: 1
   dropPrefab: {fileID: 0}
   despawnDelay: 0.35
+--- !u!114 &3132617934320406210
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1147923898989794494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c6e8cce13034014b98a5f083e56a6dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TreeFrogAdventure.Fx.EnemyFeedback
+  flashColor: {r: 1, g: 1, b: 1, a: 1}
+  flashDuration: 0.12
+  collapseOnDeath: 1
 --- !u!114 &124954261779798178
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -48,7 +48,10 @@ namespace TreeFrogAdventure.EditorTools
 
         // Playable area is the CENTER terrain tile; the other four are borders.
         private static readonly Vector2 MapCenter = new Vector2(0.5f, 0.6f);
-        private const float GoalRingRadius = 32f;
+        // Spawn and exit sit on opposite sides of the playable tile, so a level is a
+        // traversal of the whole map rather than a short hop across one corner of it.
+        // At this radius the two ends are roughly 76 m apart on a ~96 m tile.
+        private const float EndpointRadius = 38f;
 
         // ---------------------------------------------------------- presets --
         private struct Mood
@@ -163,17 +166,20 @@ namespace TreeFrogAdventure.EditorTools
                 var go = new GameObject(SpawnName);
                 go.transform.SetParent(systems.transform, false);
                 spawn = go.transform;
-
-                // Default to wherever the player already sits, so behaviour does
-                // not change until a designer deliberately moves the marker.
-                PlayerHealth player = levelScene.GetRootGameObjects()
-                    .Select(r => r.GetComponentInChildren<PlayerHealth>(true))
-                    .FirstOrDefault(p => p != null);
-
-                spawn.SetPositionAndRotation(
-                    player != null ? player.transform.position : GroundAt(MapCenter, envScene, 1f),
-                    player != null ? player.transform.rotation : Quaternion.identity);
             }
+
+            // Both endpoints are derived from the level number rather than inherited
+            // from the template. The template put every level's spawn on the same spot
+            // out on a border tile, and the exit on a 32 m ring around the middle, so
+            // twenty levels all played out inside the same small patch of a large map.
+            (Vector3 spawnPoint, Vector3 goalPoint) = Endpoints(level, envScene);
+
+            spawn.position = spawnPoint;
+
+            // Face the exit, so the player starts pointed down the route.
+            Vector3 facing = goalPoint - spawnPoint;
+            facing.y = 0f;
+            if (facing.sqrMagnitude > 1e-4f) spawn.rotation = Quaternion.LookRotation(facing, Vector3.up);
 
             // --- level context ------------------------------------------------
             // Deliberately not using ??: UnityEngine.Object overloads ==, so a
@@ -201,25 +207,27 @@ namespace TreeFrogAdventure.EditorTools
             box.isTrigger = true;
             box.size = new Vector3(4f, 4f, 4f);
 
-            if (newGoal)
-            {
-                goal.AddComponent<LevelGoal>();
-            }
+            var goalComponent = goal.GetComponent<LevelGoal>();
+            if (goalComponent == null) goalComponent = goal.AddComponent<LevelGoal>();
 
-            if (newGoal)
-            {
-                // Spread the five goals of a world around the map so the levels do
-                // not all end in the same corner.
-                float angle = (levelInWorld - 1) * (360f / Moods.Length) * Mathf.Deg2Rad;
-                var xz = MapCenter + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * GoalRingRadius;
-                goal.transform.position = GroundAt(xz, envScene, 2f);
-            }
+            // The scenes were authored with auto-advance on, which skips the results
+            // screen entirely. Forced off here because the serialized value in the
+            // twenty existing scenes will not change just because the default did.
+            var goalSo = new SerializedObject(goalComponent);
+            goalSo.FindProperty("loadNextAutomatically").boolValue = false;
+            goalSo.ApplyModifiedPropertiesWithoutUndo();
 
-            // --- HUD / kill volume / mid checkpoint ---------------------------
+            goal.transform.position = goalPoint;
+
+            // --- HUD / kill volume / banner -----------------------------------
             string extras = AddLevelFurniture(levelScene, envScene, systems, spawn, goal.transform);
 
-            return $"mood={mood.Name,-8} spawn={(newSpawn ? "created" : "kept")} " +
-                   $"goal={(newGoal ? $"placed at {goal.transform.position:F0}" : "kept")} {extras}";
+            // --- enemies, traps, pickups, secrets, boss ------------------------
+            string content = LevelPopulator.Populate(level, levelScene, envScene, spawn, goal.transform);
+
+            float span = Vector3.Distance(spawnPoint, goalPoint);
+
+            return $"mood={mood.Name,-8} span={span,4:F0}m {extras} {content}";
         }
 
         /// <summary>
@@ -264,19 +272,16 @@ namespace TreeFrogAdventure.EditorTools
                 added.Add("killvolume");
             }
 
-            // One checkpoint halfway between spawn and goal, so a death does not send
-            // the player all the way back.
-            if (spawn != null && goal != null)
-            {
-                Vector2 mid = new Vector2(
-                    (spawn.position.x + goal.position.x) * 0.5f,
-                    (spawn.position.z + goal.position.z) * 0.5f);
+            // Checkpoints used to be a single one at the midpoint, created here.
+            // LevelPopulator now spaces them along the path under LevelContent, so the
+            // old root is removed to avoid a third checkpoint sitting between them.
+            GameObject staleCheckpoint = levelScene.GetRootGameObjects()
+                .FirstOrDefault(g => g.name == CheckpointName);
 
-                if (InstantiateIfMissing(levelScene, CheckpointPrefab, CheckpointName,
-                                         GroundAt(mid, envScene, 0.1f), out _))
-                {
-                    added.Add("checkpoint");
-                }
+            if (staleCheckpoint != null)
+            {
+                Object.DestroyImmediate(staleCheckpoint);
+                added.Add("old-checkpoint-removed");
             }
 
             return added.Count > 0 ? "+" + string.Join(",", added) : "furniture kept";
@@ -358,8 +363,9 @@ namespace TreeFrogAdventure.EditorTools
             return null;
         }
 
-        /// <summary>World position on the terrain under the given XZ, plus an offset.</summary>
-        private static Vector3 GroundAt(Vector2 xz, Scene envScene, float heightOffset)
+        /// <summary>World position on the terrain under the given XZ, plus an offset.
+        /// Internal because LevelPopulator drops its content onto the same terrain.</summary>
+        internal static Vector3 GroundAt(Vector2 xz, Scene envScene, float heightOffset)
         {
             float best = 0f;
             bool found = false;
@@ -380,6 +386,67 @@ namespace TreeFrogAdventure.EditorTools
             }
 
             return new Vector3(xz.x, best + heightOffset, xz.y);
+        }
+
+        /// <summary>
+        /// Where the level starts and ends, derived purely from the level number so the
+        /// result is stable across rebuilds.
+        ///
+        /// The two are placed on opposite sides of the playable tile, and the axis is
+        /// rotated per level and per world, so the five levels of a world cross the
+        /// shared map along five different lines instead of reusing one corridor.
+        /// </summary>
+        private static (Vector3 spawn, Vector3 goal) Endpoints(int level, Scene envScene)
+        {
+            var (world, levelInWorld) = LevelProgress.GetWorldAndLevel(level);
+
+            // 72 degrees per level within a world, plus a per-world twist so world 2
+            // does not retrace world 1's lines on its own map.
+            float degrees = (levelInWorld - 1) * 72f + (world - 1) * 23f;
+            float radians = degrees * Mathf.Deg2Rad;
+
+            var axis = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
+
+            Vector3 spawn = SolidGroundNear(MapCenter - axis * EndpointRadius, envScene, 1f);
+            Vector3 goal = SolidGroundNear(MapCenter + axis * EndpointRadius, envScene, 2f);
+
+            return (spawn, goal);
+        }
+
+        /// <summary>
+        /// Grounds a point, searching outward in a spiral if the first pick is in water.
+        /// An endpoint underwater would drop the player into the swamp on spawn, or put
+        /// the exit somewhere they have to swim to and cannot stand on.
+        /// </summary>
+        private static Vector3 SolidGroundNear(Vector2 xz, Scene envScene, float heightOffset)
+        {
+            const int waterLayer = 4;
+            const float halfExtent = 44f;
+
+            for (int attempt = 0; attempt < 32; attempt++)
+            {
+                // Golden-angle spiral: samples spread evenly instead of clustering
+                // along one ray the way a fixed angular step does.
+                float radius = attempt * 1.6f;
+                float angle = attempt * 2.39996f;
+
+                var candidate = new Vector2(
+                    Mathf.Clamp(xz.x + Mathf.Cos(angle) * radius,
+                                MapCenter.x - halfExtent, MapCenter.x + halfExtent),
+                    Mathf.Clamp(xz.y + Mathf.Sin(angle) * radius,
+                                MapCenter.y - halfExtent, MapCenter.y + halfExtent));
+
+                Vector3 ground = GroundAt(candidate, envScene, heightOffset);
+
+                if (!Physics.CheckSphere(ground + Vector3.up * 1.5f, 1.5f, 1 << waterLayer,
+                                         QueryTriggerInteraction.Collide))
+                {
+                    return ground;
+                }
+            }
+
+            // Everything nearby is water. Better a wet endpoint than none at all.
+            return GroundAt(xz, envScene, heightOffset);
         }
 
         private static GameObject FindOrCreateRoot(Scene scene, string name)

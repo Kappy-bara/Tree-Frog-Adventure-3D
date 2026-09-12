@@ -1,4 +1,5 @@
 using TreeFrogAdventure.Hazards;
+using TreeFrogAdventure.Fx;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -121,6 +122,9 @@ namespace TreeFrogAdventure.Player
         {
             IsSwimming = true;
 
+            // At the surface, not at the frog: a splash rendered underwater is invisible.
+            FxPool.Play(FxKind.Splash, new Vector3(transform.position.x, _surfaceY, transform.position.z));
+
             // Carry momentum in, but bleed most of the fall off — entering from a great
             // height should splash, not fire the frog to the bottom.
             _velocity = _controller.Velocity;
@@ -132,6 +136,8 @@ namespace TreeFrogAdventure.Player
 
         private void ExitWater()
         {
+            FxPool.Play(FxKind.Splash, new Vector3(transform.position.x, _surfaceY, transform.position.z));
+
             IsSwimming = false;
             SubmersionDepth = 0f;
             _water = null;

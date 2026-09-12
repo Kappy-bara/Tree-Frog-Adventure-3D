@@ -1,5 +1,6 @@
 using System.Text;
 using TreeFrogAdventure.Enemies;
+using TreeFrogAdventure.Fx;
 using TreeFrogAdventure.Player;
 using UnityEditor;
 using UnityEngine;
@@ -12,7 +13,7 @@ namespace TreeFrogAdventure.EditorTools
     /// Every enemy follows the same contract, so swapping in real art later is a
     /// drag-and-drop with no code change:
     ///
-    ///   Root  — layer Enemy, EnemyHealth, one AI script, DamageSource,
+    ///   Root  — layer Enemy, EnemyHealth, EnemyFeedback, one AI script, DamageSource,
     ///           trigger collider (contact damage + stomp target),
     ///           CharacterController + GroundEnemyMotor for ground types
     ///   Visual — child holding EnemyVisual and the primitive meshes
@@ -349,6 +350,11 @@ namespace TreeFrogAdventure.EditorTools
             so.FindProperty("maxHealth").intValue = maxHealth;
             so.FindProperty("stompable").boolValue = stompable;
             so.ApplyModifiedPropertiesWithoutUndo();
+
+            // Hit flash and death burst. Added here because every enemy calls this, and
+            // an enemy without feedback simply blinks out of existence when killed —
+            // EnemyHealth has fired OnDamaged and OnDeath all along with no listener.
+            root.AddComponent<EnemyFeedback>();
         }
 
         private static void AddDamage(GameObject root, int amount, float knockback = 0f)

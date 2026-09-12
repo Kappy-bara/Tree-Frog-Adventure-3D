@@ -8,9 +8,10 @@ namespace TreeFrogAdventure.Core
     /// checkpoint.
     ///
     /// Deliberately NOT the same thing as <see cref="TreeFrogAdventure.Menu.LevelProgress"/>.
-    /// That persists which levels are unlocked across launches (PlayerPrefs); this is
-    /// in-memory state for the current run and is intentionally lost on quit — dying
-    /// out of lives should not be recoverable by relaunching.
+    /// That persists which levels are unlocked across launches (a JSON save file via
+    /// <see cref="SaveSystem"/>); this is in-memory state for the current run and is
+    /// intentionally lost on quit — dying out of lives should not be recoverable by
+    /// relaunching.
     ///
     /// Note on the 3-life system: PlayerHealth's `startingHealth = 3` is HIT POINTS,
     /// not lives. Lives live here, and one is spent each time health reaches zero.

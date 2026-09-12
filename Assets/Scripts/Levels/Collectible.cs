@@ -1,4 +1,5 @@
 using TreeFrogAdventure.Core;
+using TreeFrogAdventure.Fx;
 using TreeFrogAdventure.Player;
 using UnityEngine;
 
@@ -86,9 +87,28 @@ namespace TreeFrogAdventure.Levels
             {
                 Instantiate(collectEffectPrefab, transform.position, Quaternion.identity);
             }
+            else
+            {
+                // Tinted by kind so a coin and a crystal do not spark identically,
+                // without needing a separate effect prefab for each of the eight.
+                FxPool.Play(FxKind.Collect, transform.position, TintFor(kind));
+            }
 
             Destroy(gameObject);
         }
+
+        private static Color TintFor(CollectibleKind kind) => kind switch
+        {
+            CollectibleKind.Coin => new Color(1f, 0.85f, 0.3f),
+            CollectibleKind.Fly => new Color(0.7f, 0.8f, 0.6f),
+            CollectibleKind.ExtraLife => new Color(1f, 0.45f, 0.55f),
+            CollectibleKind.Health => new Color(1f, 0.35f, 0.35f),
+            CollectibleKind.SpeedBoost => new Color(0.4f, 0.8f, 1f),
+            CollectibleKind.JumpBoost => new Color(0.6f, 1f, 0.4f),
+            CollectibleKind.Invincibility => new Color(1f, 1f, 0.5f),
+            CollectibleKind.NatureCrystal => new Color(0.4f, 1f, 0.7f),
+            _ => Color.white,
+        };
 
         private void Apply(PlayerHealth player)
         {

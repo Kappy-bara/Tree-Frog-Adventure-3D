@@ -181,6 +181,11 @@ namespace TreeFrogAdventure.EditorTools
                                               new Vector2(40f, -400f), new Vector2(700f, 50f),
                                               TextAlignmentOptions.Left);
 
+            // The compass builds its own children in Start. Added here so it rides the
+            // one HUD prefab that every level instances, rather than being placed
+            // twenty times by hand.
+            root.AddComponent<ObjectiveCompass>();
+
             var hud = root.AddComponent<HudController>();
             var so = new SerializedObject(hud);
             so.FindProperty("livesText").objectReferenceValue = lives;
@@ -192,7 +197,7 @@ namespace TreeFrogAdventure.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
 
             PlaceholderFactory.SavePrefab(root, HudPrefab);
-            return "GameHUD.prefab built (lives / coins / flies / health / crystals / buffs)";
+            return "GameHUD.prefab built (lives / coins / flies / health / crystals / buffs / compass)";
         }
 
         /// <summary>A label pair: a small caption and the value beside it.</summary>

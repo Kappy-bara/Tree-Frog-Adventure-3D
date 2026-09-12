@@ -1,4 +1,5 @@
 using TreeFrogAdventure.Core;
+using TreeFrogAdventure.Fx;
 using TreeFrogAdventure.Player;
 using UnityEngine;
 
@@ -31,6 +32,15 @@ namespace TreeFrogAdventure.Levels
         private static Checkpoint _active;
 
         private bool _isActive;
+
+        /// <summary>
+        /// True once the player has passed through. Read by ObjectiveCompass so the
+        /// marker moves on to the next objective instead of pointing backwards.
+        /// </summary>
+        public bool IsActivated => _isActive;
+
+        /// <summary>Where the compass should point. Never null once awake.</summary>
+        public Transform Marker => respawnPoint != null ? respawnPoint : transform;
 
         private void Reset()
         {
@@ -67,6 +77,10 @@ namespace TreeFrogAdventure.Levels
             SetVisual(true);
 
             GameSession.SetCheckpoint(respawnPoint.position, respawnPoint.rotation);
+
+            // Reaching a checkpoint is silent otherwise — the only feedback was the
+            // visual swap, which is easy to miss while running past.
+            FxPool.Play(FxKind.Checkpoint, respawnPoint.position);
 
             if (healOnActivate && player != null)
             {

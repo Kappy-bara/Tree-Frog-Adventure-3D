@@ -12,7 +12,7 @@ namespace TreeFrogAdventure.EditorTools
 {
     /// <summary>
     /// One-time generator: run from the Unity menu to build and save the Main Menu scene
-    /// (Play/Options/Quit, 25-level select grid, sound + controls options) using real
+    /// (Play/Options/Quit, 20-level select grid, sound + camera + controls options) using real
     /// UnityEngine.UI/TMPro APIs rather than hand-authored scene YAML. Safe to re-run.
     /// </summary>
     public static class MainMenuSceneBuilder
@@ -20,7 +20,6 @@ namespace TreeFrogAdventure.EditorTools
         private const string CoreSystemsGuid = "511cd4a52bad1364dbaccea691f042d9";
         private const string TmpFontGuid = "8f586378b4e144a9851e7b34d9b748ee";
         private const string ScenePath = "Assets/Scenes/MainMenu.unity";
-        private const string Level1ScenePath = "Assets/Scenes/Level_1_Forest.unity";
 
         [MenuItem("Tools/Tree Frog/Build Main Menu Scene")]
         public static void Build()
@@ -164,98 +163,6 @@ namespace TreeFrogAdventure.EditorTools
             text.raycastTarget = false;
 
             return button;
-        }
-
-        private static Slider BuildSlider(GameObject go)
-        {
-            var rect = go.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(400, 20);
-
-            var bgGO = new GameObject("Background", typeof(RectTransform));
-            bgGO.transform.SetParent(go.transform, false);
-            var bgRect = (RectTransform)bgGO.transform;
-            bgRect.anchorMin = new Vector2(0, 0.25f);
-            bgRect.anchorMax = new Vector2(1, 0.75f);
-            bgRect.offsetMin = Vector2.zero;
-            bgRect.offsetMax = Vector2.zero;
-            bgGO.AddComponent<Image>().color = new Color(1, 1, 1, 0.15f);
-
-            var fillAreaGO = new GameObject("Fill Area", typeof(RectTransform));
-            fillAreaGO.transform.SetParent(go.transform, false);
-            var fillAreaRect = (RectTransform)fillAreaGO.transform;
-            fillAreaRect.anchorMin = new Vector2(0, 0.25f);
-            fillAreaRect.anchorMax = new Vector2(1, 0.75f);
-            fillAreaRect.offsetMin = new Vector2(5, 0);
-            fillAreaRect.offsetMax = new Vector2(-5, 0);
-
-            var fillGO = new GameObject("Fill", typeof(RectTransform));
-            fillGO.transform.SetParent(fillAreaGO.transform, false);
-            var fillRect = (RectTransform)fillGO.transform;
-            fillRect.anchorMin = Vector2.zero;
-            fillRect.anchorMax = Vector2.one;
-            fillRect.offsetMin = Vector2.zero;
-            fillRect.offsetMax = Vector2.zero;
-            var fillImage = fillGO.AddComponent<Image>();
-            fillImage.color = new Color(0.3f, 0.75f, 0.4f, 1f);
-
-            var handleAreaGO = new GameObject("Handle Slide Area", typeof(RectTransform));
-            handleAreaGO.transform.SetParent(go.transform, false);
-            var handleAreaRect = (RectTransform)handleAreaGO.transform;
-            handleAreaRect.anchorMin = new Vector2(0, 0);
-            handleAreaRect.anchorMax = new Vector2(1, 1);
-            handleAreaRect.offsetMin = new Vector2(10, 0);
-            handleAreaRect.offsetMax = new Vector2(-10, 0);
-
-            var handleGO = new GameObject("Handle", typeof(RectTransform));
-            handleGO.transform.SetParent(handleAreaGO.transform, false);
-            var handleRect = (RectTransform)handleGO.transform;
-            handleRect.sizeDelta = new Vector2(20, 20);
-            var handleImage = handleGO.AddComponent<Image>();
-            handleImage.color = Color.white;
-
-            var slider = go.AddComponent<Slider>();
-            slider.fillRect = fillRect;
-            slider.handleRect = handleRect;
-            slider.targetGraphic = handleImage;
-            slider.direction = Slider.Direction.LeftToRight;
-            slider.minValue = 0f;
-            slider.maxValue = 1f;
-            slider.value = 1f;
-
-            return slider;
-        }
-
-        private static Toggle BuildToggle(GameObject go)
-        {
-            var rect = go.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(40, 40);
-
-            var bgGO = new GameObject("Background", typeof(RectTransform));
-            bgGO.transform.SetParent(go.transform, false);
-            var bgRect = (RectTransform)bgGO.transform;
-            bgRect.anchorMin = Vector2.zero;
-            bgRect.anchorMax = Vector2.one;
-            bgRect.offsetMin = Vector2.zero;
-            bgRect.offsetMax = Vector2.zero;
-            var bgImage = bgGO.AddComponent<Image>();
-            bgImage.color = new Color(1, 1, 1, 0.15f);
-
-            var checkGO = new GameObject("Checkmark", typeof(RectTransform));
-            checkGO.transform.SetParent(bgGO.transform, false);
-            var checkRect = (RectTransform)checkGO.transform;
-            checkRect.anchorMin = new Vector2(0.2f, 0.2f);
-            checkRect.anchorMax = new Vector2(0.8f, 0.8f);
-            checkRect.offsetMin = Vector2.zero;
-            checkRect.offsetMax = Vector2.zero;
-            var checkImage = checkGO.AddComponent<Image>();
-            checkImage.color = new Color(0.3f, 0.75f, 0.4f, 1f);
-
-            var toggle = go.AddComponent<Toggle>();
-            toggle.targetGraphic = bgImage;
-            toggle.graphic = checkImage;
-            toggle.isOn = false;
-
-            return toggle;
         }
 
         private static GameObject BuildMainPanel(Transform canvasTransform, TMP_FontAsset font, MainMenuController controller)
@@ -455,76 +362,20 @@ namespace TreeFrogAdventure.EditorTools
             contentRect.anchorMin = new Vector2(0.5f, 0.5f);
             contentRect.anchorMax = new Vector2(0.5f, 0.5f);
             contentRect.pivot = new Vector2(0.5f, 0.5f);
-            contentRect.sizeDelta = new Vector2(900, 620);
-            contentRect.anchoredPosition = new Vector2(0, -20);
+            // Taller than it was: the panel now carries a Camera section as well.
+            contentRect.sizeDelta = new Vector2(900, 800);
+            contentRect.anchoredPosition = new Vector2(0, -40);
 
-            var vlg = contentContainer.AddComponent<VerticalLayoutGroup>();
-            vlg.spacing = 30;
-            vlg.childAlignment = TextAnchor.UpperCenter;
-            vlg.childControlWidth = true;
-            vlg.childControlHeight = true;
-            vlg.childForceExpandWidth = true;
-            vlg.childForceExpandHeight = false;
+            OptionsPanelBuilder.Style style = OptionsPanelBuilder.Style.Menu;
+            OptionsPanelBuilder.ApplyContentLayout(contentContainer, style);
 
-            var soundHeader = CreateText("Sound", contentContainer.transform, font, 36, TextAlignmentOptions.Left);
-            soundHeader.gameObject.AddComponent<LayoutElement>().preferredHeight = 50;
-
-            var volumeRow = new GameObject("VolumeRow", typeof(RectTransform));
-            volumeRow.transform.SetParent(contentContainer.transform, false);
-            volumeRow.AddComponent<LayoutElement>().preferredHeight = 50;
-            var volumeRowHlg = volumeRow.AddComponent<HorizontalLayoutGroup>();
-            volumeRowHlg.spacing = 20;
-            volumeRowHlg.childAlignment = TextAnchor.MiddleLeft;
-            volumeRowHlg.childControlWidth = true;
-            volumeRowHlg.childControlHeight = true;
-            volumeRowHlg.childForceExpandWidth = false;
-            volumeRowHlg.childForceExpandHeight = true;
-
-            var volumeLabel = CreateText("Master Volume", volumeRow.transform, font, 28, TextAlignmentOptions.Left);
-            volumeLabel.gameObject.AddComponent<LayoutElement>().preferredWidth = 260;
-
-            var sliderGO = new GameObject("VolumeSlider", typeof(RectTransform));
-            sliderGO.transform.SetParent(volumeRow.transform, false);
-            sliderGO.AddComponent<LayoutElement>().preferredWidth = 400;
-            var slider = BuildSlider(sliderGO);
-
-            var muteRow = new GameObject("MuteRow", typeof(RectTransform));
-            muteRow.transform.SetParent(contentContainer.transform, false);
-            muteRow.AddComponent<LayoutElement>().preferredHeight = 50;
-            var muteRowHlg = muteRow.AddComponent<HorizontalLayoutGroup>();
-            muteRowHlg.spacing = 20;
-            muteRowHlg.childAlignment = TextAnchor.MiddleLeft;
-            muteRowHlg.childControlWidth = true;
-            muteRowHlg.childControlHeight = true;
-            muteRowHlg.childForceExpandWidth = false;
-            muteRowHlg.childForceExpandHeight = true;
-
-            var muteLabel = CreateText("Mute", muteRow.transform, font, 28, TextAlignmentOptions.Left);
-            muteLabel.gameObject.AddComponent<LayoutElement>().preferredWidth = 260;
-
-            var toggleGO = new GameObject("MuteToggle", typeof(RectTransform));
-            toggleGO.transform.SetParent(muteRow.transform, false);
-            toggleGO.AddComponent<LayoutElement>().preferredWidth = 50;
-            var toggle = BuildToggle(toggleGO);
-
-            var controlsHeader = CreateText("Controls", contentContainer.transform, font, 36, TextAlignmentOptions.Left);
-            controlsHeader.gameObject.AddComponent<LayoutElement>().preferredHeight = 50;
-
-            const string controlsText =
-                "Move — WASD / Arrow Keys / Gamepad Left Stick\n" +
-                "Look — Mouse / Gamepad Right Stick\n" +
-                "Jump — Space / Gamepad South Button\n" +
-                "Sprint — Left Shift / Gamepad Left Stick Press\n" +
-                "Attack — Left Mouse Button / Enter / Gamepad West Button\n" +
-                "Interact (Hold) — E / Gamepad North Button\n" +
-                "Tongue — G";
-
-            var controlsBody = CreateText(controlsText, contentContainer.transform, font, 24, TextAlignmentOptions.Left);
-            controlsBody.gameObject.AddComponent<LayoutElement>().preferredHeight = 240;
+            // Rows are built by the shared builder, which PauseMenuController also
+            // calls. The two panels used to be separate copies of the same layout.
+            OptionsPanelBuilder.Controls controls =
+                OptionsPanelBuilder.BuildContent(contentContainer.transform, font, style);
 
             var optionsPanelComponent = panel.AddComponent<OptionsPanel>();
-            optionsPanelComponent.volumeSlider = slider;
-            optionsPanelComponent.muteToggle = toggle;
+            OptionsPanelBuilder.Assign(optionsPanelComponent, controls);
 
             return panel;
         }
@@ -535,10 +386,13 @@ namespace TreeFrogAdventure.EditorTools
                 .Where(s => !s.path.EndsWith("MainMenu.unity") && !s.path.EndsWith("Level_1_Forest.unity"))
                 .ToList();
 
+            // Level_1_Forest is the pre-split 27 MB scene, orphaned when levels moved
+            // to the additive environment + gameplay layout. It used to be re-added
+            // here on every run, dragging it back into every build; it is now filtered
+            // out above and never re-added, so running this tool also cleans it up.
             var newList = new List<EditorBuildSettingsScene>
             {
                 new EditorBuildSettingsScene(ScenePath, true),
-                new EditorBuildSettingsScene(Level1ScenePath, true)
             };
             newList.AddRange(existing);
 

@@ -30,10 +30,14 @@ namespace TreeFrogAdventure.Player
         public float maxPitch = 60f;
 
         [Header("Sensitivity")]
+        [Tooltip("Ignore the player's saved sensitivity and use the values below. " +
+                 "For testing a specific feel; leave off in shipping levels.")]
+        [SerializeField] private bool overrideSensitivity;
+
         [Tooltip("Mouse delta is measured in pixels per frame, gamepad sticks in -1..1 " +
                  "per second, so the two need separate scales or one is unusable.")]
-        [SerializeField] private float mouseSensitivity = 0.1f;
-        [SerializeField] private float gamepadSensitivity = 220f;
+        [SerializeField] private float mouseSensitivity = GameSettings.DefaultMouseSensitivity;
+        [SerializeField] private float gamepadSensitivity = GameSettings.DefaultGamepadSensitivity;
 
         [Header("Collision")]
         [SerializeField] private bool avoidGeometry = true;
@@ -103,7 +107,11 @@ namespace TreeFrogAdventure.Player
         private void ApplyLook()
         {
             Vector2 look = Vector2.zero;
-            float scale = mouseSensitivity;
+
+            // Read the player's saved setting rather than the inspector value, so the
+            // options screen actually does something. The serialized fields remain as
+            // an explicit override for testing.
+            float scale = overrideSensitivity ? mouseSensitivity : GameSettings.MouseSensitivity;
 
             if (_lookAction != null)
             {
@@ -113,7 +121,11 @@ namespace TreeFrogAdventure.Player
                 // be integrated over time or it barely moves at high framerates.
                 if (_lookAction.activeControl?.device is Gamepad)
                 {
-                    scale = gamepadSensitivity * Time.deltaTime;
+                    float gamepad = overrideSensitivity
+                        ? gamepadSensitivity
+                        : GameSettings.GamepadSensitivity;
+
+                    scale = gamepad * Time.deltaTime;
                 }
             }
             else if (Mouse.current != null)
@@ -122,7 +134,12 @@ namespace TreeFrogAdventure.Player
             }
 
             _yaw += look.x * rotationSpeed * scale;
-            _pitch -= look.y * rotationSpeed * scale;
+
+            // Screen-space up normally means look up, which is pitching the camera
+            // down; inverting flips that back for players who prefer it.
+            float pitchDelta = look.y * rotationSpeed * scale;
+            _pitch += GameSettings.InvertY ? pitchDelta : -pitchDelta;
+
             _pitch = Mathf.Clamp(_pitch, minPitch, maxPitch);
         }
 

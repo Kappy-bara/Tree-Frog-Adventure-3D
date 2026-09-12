@@ -555,6 +555,7 @@ MonoBehaviour:
   rotationSpeed: 1
   minPitch: -20
   maxPitch: 60
+  overrideSensitivity: 0
   mouseSensitivity: 0.1
   gamepadSensitivity: 220
   avoidGeometry: 1

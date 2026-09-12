@@ -55,6 +55,10 @@ namespace TreeFrogAdventure.Menu
         {
             if (PlayerHealth.IsDead) return;
 
+            // The results screen freezes the timescale itself; pausing over it and then
+            // resuming would unfreeze the game underneath it.
+            if (Levels.LevelCompleteScreen.IsShowing) return;
+
             bool pausePressed = (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
                 || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);
 
@@ -234,98 +238,6 @@ namespace TreeFrogAdventure.Menu
             return button;
         }
 
-        private Slider BuildSlider(GameObject go)
-        {
-            var rect = go.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(350, 20);
-
-            var bgGO = new GameObject("Background", typeof(RectTransform));
-            bgGO.transform.SetParent(go.transform, false);
-            var bgRect = (RectTransform)bgGO.transform;
-            bgRect.anchorMin = new Vector2(0, 0.25f);
-            bgRect.anchorMax = new Vector2(1, 0.75f);
-            bgRect.offsetMin = Vector2.zero;
-            bgRect.offsetMax = Vector2.zero;
-            bgGO.AddComponent<Image>().color = new Color(1, 1, 1, 0.15f);
-
-            var fillAreaGO = new GameObject("Fill Area", typeof(RectTransform));
-            fillAreaGO.transform.SetParent(go.transform, false);
-            var fillAreaRect = (RectTransform)fillAreaGO.transform;
-            fillAreaRect.anchorMin = new Vector2(0, 0.25f);
-            fillAreaRect.anchorMax = new Vector2(1, 0.75f);
-            fillAreaRect.offsetMin = new Vector2(5, 0);
-            fillAreaRect.offsetMax = new Vector2(-5, 0);
-
-            var fillGO = new GameObject("Fill", typeof(RectTransform));
-            fillGO.transform.SetParent(fillAreaGO.transform, false);
-            var fillRect = (RectTransform)fillGO.transform;
-            fillRect.anchorMin = Vector2.zero;
-            fillRect.anchorMax = Vector2.one;
-            fillRect.offsetMin = Vector2.zero;
-            fillRect.offsetMax = Vector2.zero;
-            var fillImage = fillGO.AddComponent<Image>();
-            fillImage.color = new Color(0.3f, 0.75f, 0.4f, 1f);
-
-            var handleAreaGO = new GameObject("Handle Slide Area", typeof(RectTransform));
-            handleAreaGO.transform.SetParent(go.transform, false);
-            var handleAreaRect = (RectTransform)handleAreaGO.transform;
-            handleAreaRect.anchorMin = new Vector2(0, 0);
-            handleAreaRect.anchorMax = new Vector2(1, 1);
-            handleAreaRect.offsetMin = new Vector2(10, 0);
-            handleAreaRect.offsetMax = new Vector2(-10, 0);
-
-            var handleGO = new GameObject("Handle", typeof(RectTransform));
-            handleGO.transform.SetParent(handleAreaGO.transform, false);
-            var handleRect = (RectTransform)handleGO.transform;
-            handleRect.sizeDelta = new Vector2(20, 20);
-            var handleImage = handleGO.AddComponent<Image>();
-            handleImage.color = Color.white;
-
-            var slider = go.AddComponent<Slider>();
-            slider.fillRect = fillRect;
-            slider.handleRect = handleRect;
-            slider.targetGraphic = handleImage;
-            slider.direction = Slider.Direction.LeftToRight;
-            slider.minValue = 0f;
-            slider.maxValue = 1f;
-            slider.value = 1f;
-
-            return slider;
-        }
-
-        private Toggle BuildToggle(GameObject go)
-        {
-            var rect = go.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(40, 40);
-
-            var bgGO = new GameObject("Background", typeof(RectTransform));
-            bgGO.transform.SetParent(go.transform, false);
-            var bgRect = (RectTransform)bgGO.transform;
-            bgRect.anchorMin = Vector2.zero;
-            bgRect.anchorMax = Vector2.one;
-            bgRect.offsetMin = Vector2.zero;
-            bgRect.offsetMax = Vector2.zero;
-            var bgImage = bgGO.AddComponent<Image>();
-            bgImage.color = new Color(1, 1, 1, 0.15f);
-
-            var checkGO = new GameObject("Checkmark", typeof(RectTransform));
-            checkGO.transform.SetParent(bgGO.transform, false);
-            var checkRect = (RectTransform)checkGO.transform;
-            checkRect.anchorMin = new Vector2(0.2f, 0.2f);
-            checkRect.anchorMax = new Vector2(0.8f, 0.8f);
-            checkRect.offsetMin = Vector2.zero;
-            checkRect.offsetMax = Vector2.zero;
-            var checkImage = checkGO.AddComponent<Image>();
-            checkImage.color = new Color(0.3f, 0.75f, 0.4f, 1f);
-
-            var toggle = go.AddComponent<Toggle>();
-            toggle.targetGraphic = bgImage;
-            toggle.graphic = checkImage;
-            toggle.isOn = false;
-
-            return toggle;
-        }
-
         private GameObject BuildPausePanel(Transform parent)
         {
             var panel = new GameObject("PausePanel", typeof(RectTransform));
@@ -400,72 +312,16 @@ namespace TreeFrogAdventure.Menu
             contentRect.anchorMin = new Vector2(0.5f, 0.5f);
             contentRect.anchorMax = new Vector2(0.5f, 0.5f);
             contentRect.pivot = new Vector2(0.5f, 0.5f);
-            contentRect.sizeDelta = new Vector2(800, 480);
-            contentRect.anchoredPosition = new Vector2(0, -30);
+            contentRect.sizeDelta = new Vector2(800, 700);
+            contentRect.anchoredPosition = new Vector2(0, -60);
 
-            var vlg = contentContainer.AddComponent<VerticalLayoutGroup>();
-            vlg.spacing = 25;
-            vlg.childAlignment = TextAnchor.UpperCenter;
-            vlg.childControlWidth = true;
-            vlg.childControlHeight = true;
-            vlg.childForceExpandWidth = true;
-            vlg.childForceExpandHeight = false;
+            OptionsPanelBuilder.Style style = OptionsPanelBuilder.Style.Pause;
+            OptionsPanelBuilder.ApplyContentLayout(contentContainer, style);
 
-            var soundHeader = CreateText("Sound", contentContainer.transform, 32, TextAlignmentOptions.Left);
-            soundHeader.gameObject.AddComponent<LayoutElement>().preferredHeight = 45;
-
-            var volumeRow = new GameObject("VolumeRow", typeof(RectTransform));
-            volumeRow.transform.SetParent(contentContainer.transform, false);
-            volumeRow.AddComponent<LayoutElement>().preferredHeight = 45;
-            var volumeRowHlg = volumeRow.AddComponent<HorizontalLayoutGroup>();
-            volumeRowHlg.spacing = 20;
-            volumeRowHlg.childAlignment = TextAnchor.MiddleLeft;
-            volumeRowHlg.childControlWidth = true;
-            volumeRowHlg.childControlHeight = true;
-            volumeRowHlg.childForceExpandWidth = false;
-            volumeRowHlg.childForceExpandHeight = true;
-
-            var volumeLabel = CreateText("Master Volume", volumeRow.transform, 24, TextAlignmentOptions.Left);
-            volumeLabel.gameObject.AddComponent<LayoutElement>().preferredWidth = 220;
-
-            var sliderGO = new GameObject("VolumeSlider", typeof(RectTransform));
-            sliderGO.transform.SetParent(volumeRow.transform, false);
-            sliderGO.AddComponent<LayoutElement>().preferredWidth = 350;
-            var slider = BuildSlider(sliderGO);
-
-            var muteRow = new GameObject("MuteRow", typeof(RectTransform));
-            muteRow.transform.SetParent(contentContainer.transform, false);
-            muteRow.AddComponent<LayoutElement>().preferredHeight = 45;
-            var muteRowHlg = muteRow.AddComponent<HorizontalLayoutGroup>();
-            muteRowHlg.spacing = 20;
-            muteRowHlg.childAlignment = TextAnchor.MiddleLeft;
-            muteRowHlg.childControlWidth = true;
-            muteRowHlg.childControlHeight = true;
-            muteRowHlg.childForceExpandWidth = false;
-            muteRowHlg.childForceExpandHeight = true;
-
-            var muteLabel = CreateText("Mute", muteRow.transform, 24, TextAlignmentOptions.Left);
-            muteLabel.gameObject.AddComponent<LayoutElement>().preferredWidth = 220;
-
-            var toggleGO = new GameObject("MuteToggle", typeof(RectTransform));
-            toggleGO.transform.SetParent(muteRow.transform, false);
-            toggleGO.AddComponent<LayoutElement>().preferredWidth = 45;
-            var toggle = BuildToggle(toggleGO);
-
-            var controlsHeader = CreateText("Controls", contentContainer.transform, 32, TextAlignmentOptions.Left);
-            controlsHeader.gameObject.AddComponent<LayoutElement>().preferredHeight = 45;
-
-            const string controlsText =
-                "Move — WASD / Arrow Keys / Gamepad Left Stick\n" +
-                "Look — Mouse / Gamepad Right Stick\n" +
-                "Jump — Space / Gamepad South Button\n" +
-                "Sprint — Left Shift / Gamepad Left Stick Press\n" +
-                "Attack — Left Mouse Button / Enter / Gamepad West Button\n" +
-                "Interact (Hold) — E / Gamepad North Button\n" +
-                "Tongue — G";
-
-            var controlsBody = CreateText(controlsText, contentContainer.transform, 20, TextAlignmentOptions.Left);
-            controlsBody.gameObject.AddComponent<LayoutElement>().preferredHeight = 200;
+            // Shared with the main-menu options screen; these were two separate copies
+            // of the same layout and had to be edited in lockstep.
+            OptionsPanelBuilder.Controls controls =
+                OptionsPanelBuilder.BuildContent(contentContainer.transform, _font, style);
 
             var backButton = CreateButton("BackButton", "Back", panel.transform, 200, 55);
             var backRect = (RectTransform)backButton.transform;
@@ -476,8 +332,7 @@ namespace TreeFrogAdventure.Menu
             backButton.onClick.AddListener(OnBackFromOptions);
 
             var optionsPanelComponent = panel.AddComponent<OptionsPanel>();
-            optionsPanelComponent.volumeSlider = slider;
-            optionsPanelComponent.muteToggle = toggle;
+            OptionsPanelBuilder.Assign(optionsPanelComponent, controls);
 
             return panel;
         }
