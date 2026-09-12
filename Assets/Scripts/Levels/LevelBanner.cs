@@ -2,6 +2,7 @@ using System.Collections;
 using TMPro;
 using TreeFrogAdventure.Core;
 using TreeFrogAdventure.Menu;
+using TreeFrogAdventure.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -68,10 +69,20 @@ namespace TreeFrogAdventure.Levels
             group.interactable = false;
             group.alpha = 0f;
 
-            CreateLabel(canvasGO.transform, title, 90, new Vector2(0f, 60f));
-            if (!string.IsNullOrEmpty(subtitle))
+            // A card behind the text. The banner now fires on every checkpoint unlock,
+            // so it has to stay readable over whatever the player happens to be facing
+            // rather than relying on the outline alone.
+            bool hasSubtitle = !string.IsNullOrEmpty(subtitle);
+
+            UiTheme.PanelBox(canvasGO.transform, "Card",
+                             new Vector2(1000f, hasSubtitle ? 240f : 170f),
+                             new Vector2(0f, 20f),
+                             new Color(UiTheme.Surface.r, UiTheme.Surface.g, UiTheme.Surface.b, 0.82f));
+
+            CreateLabel(canvasGO.transform, title, 84, new Vector2(0f, hasSubtitle ? 60f : 20f));
+            if (hasSubtitle)
             {
-                CreateLabel(canvasGO.transform, subtitle, 44, new Vector2(0f, -30f));
+                CreateLabel(canvasGO.transform, subtitle, 40, new Vector2(0f, -30f));
             }
 
             yield return Fade(group, 0f, 1f, fadeDuration);

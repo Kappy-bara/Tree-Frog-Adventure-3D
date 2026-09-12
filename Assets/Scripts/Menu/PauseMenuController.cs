@@ -1,5 +1,6 @@
 using TMPro;
 using TreeFrogAdventure.Player;
+using TreeFrogAdventure.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -201,7 +202,8 @@ namespace TreeFrogAdventure.Menu
             return text;
         }
 
-        private Button CreateButton(string name, string label, Transform parent, float width, float height)
+        private Button CreateButton(string name, string label, Transform parent, float width, float height,
+                                    UiTheme.ButtonKind kind = UiTheme.ButtonKind.Secondary)
         {
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
@@ -213,11 +215,17 @@ namespace TreeFrogAdventure.Menu
             layoutElement.preferredWidth = width;
             layoutElement.preferredHeight = height;
 
+            // Styled from UiTheme so this screen matches the rest of the game. The
+            // flat 12%-white quad it replaced had no visible hover or press.
             var image = go.AddComponent<Image>();
-            image.color = new Color(1f, 1f, 1f, 0.12f);
+            image.sprite = UiTheme.Pill;
+            image.type = Image.Type.Sliced;
+            image.color = Color.white;
 
             var button = go.AddComponent<Button>();
             button.targetGraphic = image;
+            button.transition = Selectable.Transition.ColorTint;
+            button.colors = UiTheme.ButtonColors(kind);
 
             var textGO = new GameObject("Label", typeof(RectTransform));
             textGO.transform.SetParent(go.transform, false);
@@ -273,7 +281,8 @@ namespace TreeFrogAdventure.Menu
             vlg.childForceExpandWidth = true;
             vlg.childForceExpandHeight = false;
 
-            var resumeButton = CreateButton("ResumeButton", "Resume", buttonContainer.transform, 360, 65);
+            var resumeButton = CreateButton("ResumeButton", "Resume", buttonContainer.transform, 360, 65,
+                                            UiTheme.ButtonKind.Primary);
             resumeButton.onClick.AddListener(Resume);
 
             var optionsButton = CreateButton("OptionsButton", "Options", buttonContainer.transform, 360, 65);

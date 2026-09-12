@@ -12,6 +12,9 @@ namespace TreeFrogAdventure.UI
     /// because it only exists during four fights out of twenty levels and a prefab
     /// would mean carrying a disabled canvas through every other level.
     ///
+    /// Anchored to the BOTTOM of the screen. The objective compass owns the top strip,
+    /// and the two were drawn on top of each other.
+    ///
     /// Phase boundaries are drawn as ticks, so the player can see the next stun coming
     /// instead of being surprised by it.
     /// </summary>
@@ -69,23 +72,23 @@ namespace TreeFrogAdventure.UI
             nameGO.transform.SetParent(transform, false);
 
             var nameRect = (RectTransform)nameGO.transform;
-            nameRect.anchorMin = new Vector2(0.5f, 1f);
-            nameRect.anchorMax = new Vector2(0.5f, 1f);
-            nameRect.pivot = new Vector2(0.5f, 1f);
-            nameRect.anchoredPosition = new Vector2(0f, -32f);
+            nameRect.anchorMin = new Vector2(0.5f, 0f);
+            nameRect.anchorMax = new Vector2(0.5f, 0f);
+            nameRect.pivot = new Vector2(0.5f, 0f);
+            nameRect.anchoredPosition = new Vector2(0f, 104f);
             nameRect.sizeDelta = new Vector2(1200f, 54f);
 
             _nameLabel = nameGO.AddComponent<TextMeshProUGUI>();
             if (font != null) _nameLabel.font = font;
             _nameLabel.text = boss.BossName;
-            _nameLabel.fontSize = 40;
+            _nameLabel.fontSize = UiTheme.HeadingSize;
             _nameLabel.alignment = TextAlignmentOptions.Center;
-            _nameLabel.color = Color.white;
+            _nameLabel.color = UiTheme.TextPrimary;
             _nameLabel.outlineWidth = 0.2f;
-            _nameLabel.outlineColor = new Color32(0, 0, 0, 200);
+            _nameLabel.outlineColor = new Color32(0, 0, 0, 220);
 
             // ---- track ------------------------------------------------------
-            RectTransform trackRect = CreateBar("Track", new Color(0f, 0f, 0f, 0.65f), -96f);
+            RectTransform trackRect = CreateBar("Track", new Color(0f, 0f, 0f, 0.65f), 62f);
 
             // The chip sits behind the fill and drains a beat later, so a hit reads as
             // a chunk being taken rather than the bar simply being shorter.
@@ -108,13 +111,15 @@ namespace TreeFrogAdventure.UI
             go.transform.SetParent(transform, false);
 
             var rect = (RectTransform)go.transform;
-            rect.anchorMin = new Vector2(0.5f, 1f);
-            rect.anchorMax = new Vector2(0.5f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchorMin = new Vector2(0.5f, 0f);
+            rect.anchorMax = new Vector2(0.5f, 0f);
+            rect.pivot = new Vector2(0.5f, 0f);
             rect.anchoredPosition = new Vector2(0f, y);
-            rect.sizeDelta = new Vector2(1100f, 26f);
+            rect.sizeDelta = new Vector2(1100f, 28f);
 
             var image = go.AddComponent<Image>();
+            image.sprite = UiTheme.Pill;
+            image.type = Image.Type.Sliced;
             image.color = color;
             image.raycastTarget = false;
 
@@ -140,6 +145,8 @@ namespace TreeFrogAdventure.UI
             rect.pivot = new Vector2(0f, 0.5f);
 
             image = go.AddComponent<Image>();
+            image.sprite = UiTheme.Pill;
+            image.type = Image.Type.Sliced;
             image.color = color;
             image.raycastTarget = false;
 
@@ -208,8 +215,8 @@ namespace TreeFrogAdventure.UI
             _fillImage.color = Time.unscaledTime < _flashUntil
                 ? Color.white
                 : _boss.IsVulnerable
-                    ? new Color(1f, 0.75f, 0.25f, 1f)   // the stun window, made obvious
-                    : new Color(0.85f, 0.22f, 0.20f, 1f);
+                    ? UiTheme.Gold          // the stun window, made obvious
+                    : UiTheme.Danger;
 
             _nameLabel.text = _boss.IsVulnerable
                 ? $"{_boss.BossName} — STUNNED"

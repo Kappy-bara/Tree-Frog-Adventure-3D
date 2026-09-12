@@ -1,3 +1,4 @@
+using System;
 using TreeFrogAdventure.Core;
 using TreeFrogAdventure.Fx;
 using TreeFrogAdventure.Player;
@@ -42,6 +43,13 @@ namespace TreeFrogAdventure.Levels
         /// <summary>Where the compass should point. Never null once awake.</summary>
         public Transform Marker => respawnPoint != null ? respawnPoint : transform;
 
+        /// <summary>
+        /// Raised the first time the player reaches this checkpoint. ObjectiveChain
+        /// listens so it can reveal the next one — checkpoints are a locked sequence,
+        /// not a set of optional respawn points scattered around the map.
+        /// </summary>
+        public event Action<Checkpoint> OnActivated;
+
         private void Reset()
         {
             var col = GetComponent<Collider>();
@@ -77,6 +85,8 @@ namespace TreeFrogAdventure.Levels
             SetVisual(true);
 
             GameSession.SetCheckpoint(respawnPoint.position, respawnPoint.rotation);
+
+            OnActivated?.Invoke(this);
 
             // Reaching a checkpoint is silent otherwise — the only feedback was the
             // visual swap, which is easy to miss while running past.

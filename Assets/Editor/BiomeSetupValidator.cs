@@ -373,6 +373,31 @@ namespace TreeFrogAdventure.EditorTools
                     }
                 }
 
+                // The chain is the level structure: without it every checkpoint and
+                // the exit are live from the first frame and the route means nothing.
+                ObjectiveChain chain = roots.Select(r => r.GetComponentInChildren<ObjectiveChain>(true))
+                                            .FirstOrDefault(c => c != null);
+
+                if (chain == null)
+                {
+                    problems.Add("no ObjectiveChain");
+                }
+                else
+                {
+                    var chainSo = new SerializedObject(chain);
+                    int wired = chainSo.FindProperty("checkpoints").arraySize;
+
+                    if (wired != checkpoints)
+                    {
+                        problems.Add($"chain wires {wired} checkpoints but the scene has {checkpoints}");
+                    }
+
+                    if (chainSo.FindProperty("finalObjective").objectReferenceValue == null)
+                    {
+                        problems.Add("chain has no final objective, so the exit never opens");
+                    }
+                }
+
                 if (problems.Count > 0)
                 {
                     Fail($"Level_{level:00}: {string.Join("; ", problems)}");

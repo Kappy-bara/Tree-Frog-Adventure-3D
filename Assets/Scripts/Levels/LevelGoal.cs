@@ -26,7 +26,16 @@ namespace TreeFrogAdventure.Levels
         private bool _triggered;
         private float _levelStartTime;
 
+        /// <summary>
+        /// Fallback only. The real start time comes from LevelContext, because this
+        /// object is disabled until the last checkpoint is claimed and its Start would
+        /// otherwise fire long after the level actually began.
+        /// </summary>
         private void Start() => _levelStartTime = Time.time;
+
+        private float LevelStartTime => LevelContext.Current != null
+            ? LevelContext.Current.LevelStartTime
+            : _levelStartTime;
 
         private void Reset()
         {
@@ -53,7 +62,7 @@ namespace TreeFrogAdventure.Levels
                 return;
             }
 
-            float elapsed = Time.time - _levelStartTime;
+            float elapsed = Time.time - LevelStartTime;
 
             // Read the record BEFORE recording this run, or the "previous best" the
             // results screen compares against is the time that was just set.

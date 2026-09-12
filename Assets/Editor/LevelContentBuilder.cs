@@ -1,10 +1,10 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using TreeFrogAdventure.Hazards;
 using TreeFrogAdventure.Levels;
 using TreeFrogAdventure.Menu;
-using TreeFrogAdventure.Player;
 using TreeFrogAdventure.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -48,10 +48,6 @@ namespace TreeFrogAdventure.EditorTools
 
         // Playable area is the CENTER terrain tile; the other four are borders.
         private static readonly Vector2 MapCenter = new Vector2(0.5f, 0.6f);
-        // Spawn and exit sit on opposite sides of the playable tile, so a level is a
-        // traversal of the whole map rather than a short hop across one corner of it.
-        // At this radius the two ends are roughly 76 m apart on a ~96 m tile.
-        private const float EndpointRadius = 38f;
 
         // ---------------------------------------------------------- presets --
         private struct Mood
@@ -168,11 +164,14 @@ namespace TreeFrogAdventure.EditorTools
                 spawn = go.transform;
             }
 
-            // Both endpoints are derived from the level number rather than inherited
-            // from the template. The template put every level's spawn on the same spot
-            // out on a border tile, and the exit on a 32 m ring around the middle, so
-            // twenty levels all played out inside the same small patch of a large map.
-            (Vector3 spawnPoint, Vector3 goalPoint) = Endpoints(level, envScene);
+            // The route is planned first and the markers are simply its two ends.
+            // Deriving them separately is how the template ended up with every level
+            // spawning on the same spot out on a border tile while the exit sat on a
+            // small ring around the middle of the map.
+            List<Vector3> route = LevelPopulator.PlanRoute(level, envScene);
+
+            Vector3 spawnPoint = route[0] + Vector3.up * 1f;
+            Vector3 goalPoint = route[route.Count - 1] + Vector3.up * 2f;
 
             spawn.position = spawnPoint;
 
@@ -198,7 +197,6 @@ namespace TreeFrogAdventure.EditorTools
 
             // --- goal ---------------------------------------------------------
             GameObject goal = FindOrCreateRoot(levelScene, GoalName);
-            bool newGoal = goal.GetComponent<LevelGoal>() == null;
 
             // Collider first: LevelGoal has [RequireComponent(typeof(Collider))],
             // and Unity cannot auto-add an abstract type to satisfy it.
@@ -223,7 +221,8 @@ namespace TreeFrogAdventure.EditorTools
             string extras = AddLevelFurniture(levelScene, envScene, systems, spawn, goal.transform);
 
             // --- enemies, traps, pickups, secrets, boss ------------------------
-            string content = LevelPopulator.Populate(level, levelScene, envScene, spawn, goal.transform);
+            string content = LevelPopulator.Populate(level, levelScene, envScene,
+                                                     spawn, goal.transform, route);
 
             float span = Vector3.Distance(spawnPoint, goalPoint);
 
@@ -386,67 +385,6 @@ namespace TreeFrogAdventure.EditorTools
             }
 
             return new Vector3(xz.x, best + heightOffset, xz.y);
-        }
-
-        /// <summary>
-        /// Where the level starts and ends, derived purely from the level number so the
-        /// result is stable across rebuilds.
-        ///
-        /// The two are placed on opposite sides of the playable tile, and the axis is
-        /// rotated per level and per world, so the five levels of a world cross the
-        /// shared map along five different lines instead of reusing one corridor.
-        /// </summary>
-        private static (Vector3 spawn, Vector3 goal) Endpoints(int level, Scene envScene)
-        {
-            var (world, levelInWorld) = LevelProgress.GetWorldAndLevel(level);
-
-            // 72 degrees per level within a world, plus a per-world twist so world 2
-            // does not retrace world 1's lines on its own map.
-            float degrees = (levelInWorld - 1) * 72f + (world - 1) * 23f;
-            float radians = degrees * Mathf.Deg2Rad;
-
-            var axis = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
-
-            Vector3 spawn = SolidGroundNear(MapCenter - axis * EndpointRadius, envScene, 1f);
-            Vector3 goal = SolidGroundNear(MapCenter + axis * EndpointRadius, envScene, 2f);
-
-            return (spawn, goal);
-        }
-
-        /// <summary>
-        /// Grounds a point, searching outward in a spiral if the first pick is in water.
-        /// An endpoint underwater would drop the player into the swamp on spawn, or put
-        /// the exit somewhere they have to swim to and cannot stand on.
-        /// </summary>
-        private static Vector3 SolidGroundNear(Vector2 xz, Scene envScene, float heightOffset)
-        {
-            const int waterLayer = 4;
-            const float halfExtent = 44f;
-
-            for (int attempt = 0; attempt < 32; attempt++)
-            {
-                // Golden-angle spiral: samples spread evenly instead of clustering
-                // along one ray the way a fixed angular step does.
-                float radius = attempt * 1.6f;
-                float angle = attempt * 2.39996f;
-
-                var candidate = new Vector2(
-                    Mathf.Clamp(xz.x + Mathf.Cos(angle) * radius,
-                                MapCenter.x - halfExtent, MapCenter.x + halfExtent),
-                    Mathf.Clamp(xz.y + Mathf.Sin(angle) * radius,
-                                MapCenter.y - halfExtent, MapCenter.y + halfExtent));
-
-                Vector3 ground = GroundAt(candidate, envScene, heightOffset);
-
-                if (!Physics.CheckSphere(ground + Vector3.up * 1.5f, 1.5f, 1 << waterLayer,
-                                         QueryTriggerInteraction.Collide))
-                {
-                    return ground;
-                }
-            }
-
-            // Everything nearby is water. Better a wet endpoint than none at all.
-            return GroundAt(xz, envScene, heightOffset);
         }
 
         private static GameObject FindOrCreateRoot(Scene scene, string name)

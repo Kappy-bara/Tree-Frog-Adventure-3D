@@ -149,8 +149,6 @@ namespace TreeFrogAdventure.EditorTools
 
         private static string BuildHud()
         {
-            var font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
-
             var root = new GameObject("GameHUD");
             var canvas = root.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -163,27 +161,63 @@ namespace TreeFrogAdventure.EditorTools
 
             root.AddComponent<GraphicRaycaster>();
 
-            TextMeshProUGUI lives = MakeStat(root.transform, "LivesText", "Lives", "x3",
-                                             new Vector2(40f, -40f), new Color(1f, 0.45f, 0.5f), font);
-            TextMeshProUGUI coins = MakeStat(root.transform, "CoinsText", "Coins", "0",
-                                             new Vector2(40f, -110f), new Color(1f, 0.85f, 0.25f), font);
-            TextMeshProUGUI flies = MakeStat(root.transform, "FliesText", "Flies", "0",
-                                             new Vector2(40f, -180f), new Color(0.4f, 0.9f, 0.6f), font);
-            TextMeshProUGUI health = MakeStat(root.transform, "HealthText", "HP", "3",
-                                              new Vector2(40f, -250f), new Color(0.45f, 0.85f, 1f), font);
-            TextMeshProUGUI crystals = MakeStat(root.transform, "CrystalsText", "Crystal", "0",
-                                                new Vector2(40f, -320f), new Color(0.65f, 0.55f, 1f), font);
+            // ---- one panel instead of five floating labels --------------------
+            // The stats used to be five bare text pairs scattered down the left edge
+            // with nothing tying them together or separating them from the world.
+            var panel = new GameObject("StatsPanel", typeof(RectTransform));
+            panel.transform.SetParent(root.transform, false);
 
-            // Buffs get one wide line rather than a stat pair — it holds a variable
-            // number of entries with live countdowns.
-            TextMeshProUGUI buffs = MakeLabel(root.transform, "BuffsText", "", 34,
-                                              new Color(1f, 0.95f, 0.5f), font,
-                                              new Vector2(40f, -400f), new Vector2(700f, 50f),
-                                              TextAlignmentOptions.Left);
+            var panelRect = (RectTransform)panel.transform;
+            panelRect.anchorMin = new Vector2(0f, 1f);
+            panelRect.anchorMax = new Vector2(0f, 1f);
+            panelRect.pivot = new Vector2(0f, 1f);
+            panelRect.anchoredPosition = new Vector2(28f, -28f);
+            panelRect.sizeDelta = new Vector2(330f, 268f);
 
-            // The compass builds its own children in Start. Added here so it rides the
-            // one HUD prefab that every level instances, rather than being placed
-            // twenty times by hand.
+            var panelImage = panel.AddComponent<Image>();
+            panelImage.sprite = UiTheme.Panel;
+            panelImage.type = Image.Type.Sliced;
+            panelImage.color = UiTheme.Surface;
+            panelImage.raycastTarget = false;
+
+            UiTheme.Outline(panelRect);
+
+            var column = new GameObject("Rows", typeof(RectTransform));
+            column.transform.SetParent(panel.transform, false);
+            UiTheme.Stretch(column);
+
+            var vlg = UiTheme.Column(column, spacing: 8f, align: TextAnchor.UpperLeft);
+            vlg.padding = new RectOffset(20, 20, 18, 18);
+            vlg.childForceExpandWidth = true;
+
+            // ---- health, as a meter -------------------------------------------
+            TextMeshProUGUI health = StatRow(column.transform, "Health", "HEALTH", "3",
+                                             new Color(0.45f, 0.85f, 1f));
+
+            RectTransform healthFill = MeterRow(column.transform, "HealthMeter",
+                                                new Color(0.45f, 0.85f, 1f));
+
+            TextMeshProUGUI lives = StatRow(column.transform, "Lives", "LIVES", "x3",
+                                            new Color(1f, 0.45f, 0.5f));
+            TextMeshProUGUI coins = StatRow(column.transform, "Coins", "COINS", "0", UiTheme.Gold);
+            TextMeshProUGUI flies = StatRow(column.transform, "Flies", "FLIES", "0", UiTheme.Accent);
+            TextMeshProUGUI crystals = StatRow(column.transform, "Crystals", "CRYSTALS", "0",
+                                               UiTheme.Crystal);
+
+            // ---- buffs, below the panel ---------------------------------------
+            // Outside the panel because the line is empty most of the time, and an
+            // empty strip of surface inside the panel reads as a bug.
+            TextMeshProUGUI buffs = UiTheme.Label(root.transform, "BuffsText", string.Empty,
+                                                  UiTheme.BodySize, UiTheme.Gold,
+                                                  TextAlignmentOptions.Left);
+
+            var buffRect = (RectTransform)buffs.transform;
+            buffRect.anchorMin = new Vector2(0f, 1f);
+            buffRect.anchorMax = new Vector2(0f, 1f);
+            buffRect.pivot = new Vector2(0f, 1f);
+            buffRect.anchoredPosition = new Vector2(32f, -308f);
+            buffRect.sizeDelta = new Vector2(700f, 44f);
+
             root.AddComponent<ObjectiveCompass>();
 
             var hud = root.AddComponent<HudController>();
@@ -194,58 +228,82 @@ namespace TreeFrogAdventure.EditorTools
             so.FindProperty("healthText").objectReferenceValue = health;
             so.FindProperty("crystalsText").objectReferenceValue = crystals;
             so.FindProperty("buffsText").objectReferenceValue = buffs;
+            so.FindProperty("healthFill").objectReferenceValue = healthFill;
             so.ApplyModifiedPropertiesWithoutUndo();
 
             PlaceholderFactory.SavePrefab(root, HudPrefab);
-            return "GameHUD.prefab built (lives / coins / flies / health / crystals / buffs / compass)";
+            return "GameHUD.prefab built (panel: health meter / lives / coins / flies / crystals, " +
+                   "buffs line, objective compass)";
         }
 
-        /// <summary>A label pair: a small caption and the value beside it.</summary>
-        private static TextMeshProUGUI MakeStat(Transform parent, string name, string caption,
-                                                string initial, Vector2 anchoredPosition,
-                                                Color color, TMP_FontAsset font)
+        /// <summary>
+        /// A coloured dot, a muted caption and the value, right-aligned so the numbers
+        /// line up in a column and can be read at a glance mid-jump.
+        /// </summary>
+        private static TextMeshProUGUI StatRow(Transform parent, string name, string caption,
+                                               string initial, Color color)
         {
             var row = new GameObject(name + "Row", typeof(RectTransform));
             row.transform.SetParent(parent, false);
+            row.AddComponent<LayoutElement>().preferredHeight = 34f;
 
-            var rect = (RectTransform)row.transform;
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(0f, 1f);
-            rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = anchoredPosition;
-            rect.sizeDelta = new Vector2(320f, 56f);
+            var hlg = UiTheme.Row(row, spacing: 10f, align: TextAnchor.MiddleLeft);
+            hlg.childForceExpandWidth = false;
 
-            MakeLabel(row.transform, "Caption", caption, 30, color * 0.85f, font,
-                      new Vector2(0f, 0f), new Vector2(130f, 56f), TextAlignmentOptions.Left);
+            var dot = new GameObject("Dot", typeof(RectTransform));
+            dot.transform.SetParent(row.transform, false);
 
-            return MakeLabel(row.transform, name, initial, 40, color, font,
-                             new Vector2(135f, 0f), new Vector2(185f, 56f), TextAlignmentOptions.Left);
+            var dotLayout = dot.AddComponent<LayoutElement>();
+            dotLayout.preferredWidth = 14f;
+            dotLayout.preferredHeight = 14f;
+
+            var dotImage = dot.AddComponent<Image>();
+            dotImage.sprite = UiTheme.Circle;
+            dotImage.color = color;
+            dotImage.raycastTarget = false;
+
+            TextMeshProUGUI captionLabel = UiTheme.Label(row.transform, "Caption", caption,
+                                                         UiTheme.CaptionSize, UiTheme.TextMuted,
+                                                         TextAlignmentOptions.Left);
+            captionLabel.gameObject.AddComponent<LayoutElement>().preferredWidth = 150f;
+
+            TextMeshProUGUI value = UiTheme.Label(row.transform, name + "Text", initial,
+                                                  UiTheme.SubheadingSize, color,
+                                                  TextAlignmentOptions.Right);
+            value.gameObject.AddComponent<LayoutElement>().preferredWidth = 96f;
+
+            return value;
         }
 
-        private static TextMeshProUGUI MakeLabel(Transform parent, string name, string text, int size,
-                                                 Color color, TMP_FontAsset font, Vector2 position,
-                                                 Vector2 size2, TextAlignmentOptions alignment)
+        private static RectTransform MeterRow(Transform parent, string name, Color color)
         {
-            var go = new GameObject(name, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
+            var row = new GameObject(name, typeof(RectTransform));
+            row.transform.SetParent(parent, false);
+            row.AddComponent<LayoutElement>().preferredHeight = 14f;
 
-            var rect = (RectTransform)go.transform;
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(0f, 1f);
-            rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = position;
-            rect.sizeDelta = size2;
+            var track = row.AddComponent<Image>();
+            track.sprite = UiTheme.Pill;
+            track.type = Image.Type.Sliced;
+            track.color = new Color(0f, 0f, 0f, 0.5f);
+            track.raycastTarget = false;
 
-            var label = go.AddComponent<TextMeshProUGUI>();
-            if (font != null) label.font = font;
-            label.text = text;
-            label.fontSize = size;
-            label.color = color;
-            label.alignment = alignment;
-            label.outlineWidth = 0.18f;
-            label.outlineColor = new Color32(0, 0, 0, 210);
+            var fill = new GameObject("Fill", typeof(RectTransform));
+            fill.transform.SetParent(row.transform, false);
 
-            return label;
+            var rect = (RectTransform)fill.transform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0f, 0.5f);
+            rect.offsetMin = new Vector2(3f, 3f);
+            rect.offsetMax = new Vector2(-3f, -3f);
+
+            var image = fill.AddComponent<Image>();
+            image.sprite = UiTheme.Pill;
+            image.type = Image.Type.Sliced;
+            image.color = color;
+            image.raycastTarget = false;
+
+            return rect;
         }
     }
 }

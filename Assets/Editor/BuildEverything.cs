@@ -23,6 +23,14 @@ namespace TreeFrogAdventure.EditorTools
             var report = new StringBuilder();
             report.AppendLine("[BuildEverything] Running generators in dependency order:");
 
+            // UI sprites come first: PlayerAndHudBuilder bakes sprite references into
+            // the HUD prefab, so generating them afterwards would leave it holding nulls.
+            Step(report, "UI sprites", () =>
+            {
+                UiSpriteBuilder.Build();
+                UI.UiTheme.ClearCache();
+            });
+
             Step(report, "Enemy prefabs", EnemyPrefabBuilder.Build);
             Step(report, "FX prefabs + catalog", FxPrefabBuilder.Build);
             Step(report, "Legacy prefab fixes", LegacyPrefabFixer.Fix);

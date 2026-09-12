@@ -1,6 +1,7 @@
 using TMPro;
 using TreeFrogAdventure.Core;
 using TreeFrogAdventure.Menu;
+using TreeFrogAdventure.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
@@ -84,11 +85,16 @@ namespace TreeFrogAdventure.Levels
             dimRect.anchorMax = Vector2.one;
             dimRect.offsetMin = Vector2.zero;
             dimRect.offsetMax = Vector2.zero;
-            dim.AddComponent<Image>().color = new Color(0f, 0.08f, 0.05f, 0.78f);
+            dim.AddComponent<Image>().color = UiTheme.Backdrop;
+
+            // The stats sit on a panel rather than floating on the dim, so the
+            // screen reads as a result card instead of text over the paused game.
+            UiTheme.PanelBox(transform, "Card", new Vector2(880f, 720f), new Vector2(0f, 20f));
 
             var (world, levelInWorld) = LevelProgress.GetWorldAndLevel(_result.Level);
 
-            var title = CreateText("Level Complete", transform, 74);
+            var title = CreateText("Level Complete", transform, UiTheme.TitleSize);
+            title.color = UiTheme.Accent;
             Place((RectTransform)title.transform, new Vector2(0f, 330f), new Vector2(1000f, 100f));
 
             var subtitle = CreateText(
@@ -209,7 +215,8 @@ namespace TreeFrogAdventure.Levels
 
             if (hasNext)
             {
-                CreateButton("NextButton", "Next Level", container.transform, 300f, 78f)
+                CreateButton("NextButton", "Next Level", container.transform, 300f, 78f,
+                             UiTheme.ButtonKind.Primary)
                     .onClick.AddListener(OnNext);
             }
 
@@ -284,7 +291,8 @@ namespace TreeFrogAdventure.Levels
             return text;
         }
 
-        private Button CreateButton(string name, string label, Transform parent, float width, float height)
+        private Button CreateButton(string name, string label, Transform parent, float width, float height,
+                                    UiTheme.ButtonKind kind = UiTheme.ButtonKind.Secondary)
         {
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
@@ -296,11 +304,17 @@ namespace TreeFrogAdventure.Levels
             layoutElement.preferredWidth = width;
             layoutElement.preferredHeight = height;
 
+            // Styled from UiTheme so this screen matches the rest of the game. The
+            // flat 12%-white quad it replaced had no visible hover or press.
             var image = go.AddComponent<Image>();
-            image.color = new Color(1f, 1f, 1f, 0.12f);
+            image.sprite = UiTheme.Pill;
+            image.type = Image.Type.Sliced;
+            image.color = Color.white;
 
             var button = go.AddComponent<Button>();
             button.targetGraphic = image;
+            button.transition = Selectable.Transition.ColorTint;
+            button.colors = UiTheme.ButtonColors(kind);
 
             var textGO = new GameObject("Label", typeof(RectTransform));
             textGO.transform.SetParent(go.transform, false);

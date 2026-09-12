@@ -31,6 +31,15 @@ namespace TreeFrogAdventure.Levels
 
         public int LevelNumber { get; private set; }
 
+        /// <summary>
+        /// Time.time when the level began.
+        ///
+        /// Owned here rather than by LevelGoal because the exit is disabled until the
+        /// last checkpoint is claimed, so its own Start runs late and would time only
+        /// the final stretch of the run.
+        /// </summary>
+        public float LevelStartTime { get; private set; }
+
         /// <summary>Where the level starts. Used as the respawn fallback when the
         /// player dies before reaching any checkpoint.</summary>
         public Transform SpawnPoint => spawnPoint;
@@ -38,6 +47,7 @@ namespace TreeFrogAdventure.Levels
         private void Awake()
         {
             Current = this;
+            LevelStartTime = Time.time;
             LevelNumber = levelNumberOverride > 0
                 ? levelNumberOverride
                 : ParseLevelNumber(gameObject.scene.name);

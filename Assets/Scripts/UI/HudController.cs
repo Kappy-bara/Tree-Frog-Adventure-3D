@@ -27,6 +27,10 @@ namespace TreeFrogAdventure.UI
         [Tooltip("Shows active power-ups and their remaining seconds.")]
         [SerializeField] private TextMeshProUGUI buffsText;
 
+        [Tooltip("Optional health meter fill. A number alone makes it easy to miss how " +
+                 "close to dead you are mid-fight.")]
+        [SerializeField] private RectTransform healthFill;
+
         [Header("Formatting")]
         [SerializeField] private string livesFormat = "x{0}";
         [SerializeField] private string coinsFormat = "{0}";
@@ -77,10 +81,17 @@ namespace TreeFrogAdventure.UI
                 _buffs = _player.GetComponent<PlayerBuffs>();
             }
 
-            if (healthText != null && _player.CurrentHealth != _lastHealth)
+            if (_player.CurrentHealth != _lastHealth)
             {
                 _lastHealth = _player.CurrentHealth;
-                healthText.text = string.Format(healthFormat, _lastHealth);
+
+                if (healthText != null) healthText.text = string.Format(healthFormat, _lastHealth);
+
+                if (healthFill != null)
+                {
+                    int max = Mathf.Max(1, _player.startingHealth);
+                    UiTheme.SetFill(healthFill, _lastHealth / (float)max);
+                }
             }
 
             UpdateBuffs();

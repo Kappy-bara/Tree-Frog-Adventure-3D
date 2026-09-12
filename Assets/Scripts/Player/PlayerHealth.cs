@@ -3,6 +3,7 @@ using TMPro;
 using TreeFrogAdventure.Core;
 using TreeFrogAdventure.Levels;
 using TreeFrogAdventure.Menu;
+using TreeFrogAdventure.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
@@ -290,9 +291,10 @@ namespace TreeFrogAdventure.Player
             dimRect.offsetMin = Vector2.zero;
             dimRect.offsetMax = Vector2.zero;
             var dimImage = dim.AddComponent<Image>();
-            dimImage.color = new Color(0.3f, 0f, 0f, 0.7f);
+            dimImage.color = new Color(0.10f, 0.02f, 0.03f, 0.88f);
 
-            var title = CreateText("Game Over", canvasGO.transform, 80);
+            var title = CreateText("Game Over", canvasGO.transform, UiTheme.TitleSize);
+            title.color = UiTheme.Danger;
             var titleRect = (RectTransform)title.transform;
             titleRect.anchorMin = new Vector2(0.5f, 0.5f);
             titleRect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -317,7 +319,8 @@ namespace TreeFrogAdventure.Player
             vlg.childForceExpandWidth = true;
             vlg.childForceExpandHeight = false;
 
-            var restartButton = CreateButton("RestartButton", "Restart", buttonContainer.transform, 360, 70);
+            var restartButton = CreateButton("RestartButton", "Restart", buttonContainer.transform, 360, 70,
+                                             UiTheme.ButtonKind.Primary);
             restartButton.onClick.AddListener(OnRestartButton);
 
             var mainMenuButton = CreateButton("MainMenuButton", "Main Menu", buttonContainer.transform, 360, 70);
@@ -371,7 +374,8 @@ namespace TreeFrogAdventure.Player
             return text;
         }
 
-        private Button CreateButton(string name, string label, Transform parent, float width, float height)
+        private Button CreateButton(string name, string label, Transform parent, float width, float height,
+                                    UiTheme.ButtonKind kind = UiTheme.ButtonKind.Secondary)
         {
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
@@ -383,11 +387,17 @@ namespace TreeFrogAdventure.Player
             layoutElement.preferredWidth = width;
             layoutElement.preferredHeight = height;
 
+            // Styled from UiTheme so this screen matches the rest of the game. The
+            // flat 12%-white quad it replaced had no visible hover or press.
             var image = go.AddComponent<Image>();
-            image.color = new Color(1f, 1f, 1f, 0.12f);
+            image.sprite = UiTheme.Pill;
+            image.type = Image.Type.Sliced;
+            image.color = Color.white;
 
             var button = go.AddComponent<Button>();
             button.targetGraphic = image;
+            button.transition = Selectable.Transition.ColorTint;
+            button.colors = UiTheme.ButtonColors(kind);
 
             var textGO = new GameObject("Label", typeof(RectTransform));
             textGO.transform.SetParent(go.transform, false);

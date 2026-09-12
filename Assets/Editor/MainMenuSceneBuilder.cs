@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using TreeFrogAdventure.Menu;
+using TreeFrogAdventure.UI;
 using UnityEditor;
 using UnityEditor.Events;
 using UnityEditor.SceneManagement;
@@ -104,11 +105,35 @@ namespace TreeFrogAdventure.EditorTools
         {
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
-            var rect = (RectTransform)go.transform;
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
+            UiTheme.Stretch(go);
+
+            // A solid ground for every screen. Without it the menu floated on the
+            // camera's clear colour and read as unfinished.
+            var backdrop = new GameObject("Backdrop", typeof(RectTransform));
+            backdrop.transform.SetParent(go.transform, false);
+            UiTheme.Stretch(backdrop);
+
+            var backdropImage = backdrop.AddComponent<Image>();
+            backdropImage.color = new Color(0.035f, 0.075f, 0.06f, 1f);
+            backdropImage.raycastTarget = false;
+
+            // A soft pool of light behind the content, so the middle of the screen is
+            // not as flat as the edges.
+            var glow = new GameObject("Glow", typeof(RectTransform));
+            glow.transform.SetParent(go.transform, false);
+
+            var glowRect = (RectTransform)glow.transform;
+            glowRect.anchorMin = new Vector2(0.5f, 0.5f);
+            glowRect.anchorMax = new Vector2(0.5f, 0.5f);
+            glowRect.pivot = new Vector2(0.5f, 0.5f);
+            glowRect.sizeDelta = new Vector2(1700f, 1300f);
+            glowRect.anchoredPosition = new Vector2(0f, 40f);
+
+            var glowImage = glow.AddComponent<Image>();
+            glowImage.sprite = UiTheme.Glow;
+            glowImage.color = new Color(0.16f, 0.42f, 0.28f, 0.55f);
+            glowImage.raycastTarget = false;
+
             return go;
         }
 
@@ -128,7 +153,9 @@ namespace TreeFrogAdventure.EditorTools
             return text;
         }
 
-        private static Button CreateButton(string name, string label, Transform parent, TMP_FontAsset font, float width, float height)
+        private static Button CreateButton(string name, string label, Transform parent, TMP_FontAsset font,
+                                           float width, float height,
+                                           UiTheme.ButtonKind kind = UiTheme.ButtonKind.Secondary)
         {
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
@@ -140,11 +167,18 @@ namespace TreeFrogAdventure.EditorTools
             layoutElement.preferredWidth = width;
             layoutElement.preferredHeight = height;
 
+            // Styled through UiTheme so the menu, the pause screen and the results
+            // screen are recognisably the same interface. The old flat 12%-white quad
+            // had no hover, no press and no visible disabled state.
             var image = go.AddComponent<Image>();
-            image.color = new Color(1f, 1f, 1f, 0.12f);
+            image.sprite = UiTheme.Pill;
+            image.type = Image.Type.Sliced;
+            image.color = Color.white;
 
             var button = go.AddComponent<Button>();
             button.targetGraphic = image;
+            button.transition = Selectable.Transition.ColorTint;
+            button.colors = UiTheme.ButtonColors(kind);
 
             var textGO = new GameObject("Label", typeof(RectTransform));
             textGO.transform.SetParent(go.transform, false);
@@ -157,9 +191,11 @@ namespace TreeFrogAdventure.EditorTools
             var text = textGO.AddComponent<TextMeshProUGUI>();
             text.text = label;
             text.font = font;
-            text.fontSize = Mathf.Min(28f, height * 0.5f);
+            text.fontSize = Mathf.Min(UiTheme.SubheadingSize, height * 0.42f);
             text.alignment = TextAlignmentOptions.Center;
-            text.color = Color.white;
+            text.color = kind == UiTheme.ButtonKind.Primary
+                ? new Color(0.05f, 0.12f, 0.08f)
+                : UiTheme.TextPrimary;
             text.raycastTarget = false;
 
             return button;
@@ -169,13 +205,27 @@ namespace TreeFrogAdventure.EditorTools
         {
             var panel = CreateFullRectPanel("MainPanel", canvasTransform);
 
-            var title = CreateText("Tree Frog Adventure", panel.transform, font, 64);
+            var title = CreateText("TREE FROG", panel.transform, font, 96);
+            title.color = UiTheme.Accent;
+            title.characterSpacing = 14f;
+
             var titleRect = (RectTransform)title.transform;
             titleRect.anchorMin = new Vector2(0.5f, 1f);
             titleRect.anchorMax = new Vector2(0.5f, 1f);
             titleRect.pivot = new Vector2(0.5f, 1f);
-            titleRect.anchoredPosition = new Vector2(0, -100);
-            titleRect.sizeDelta = new Vector2(1200, 100);
+            titleRect.anchoredPosition = new Vector2(0, -120);
+            titleRect.sizeDelta = new Vector2(1200, 110);
+
+            var subtitle = CreateText("A D V E N T U R E", panel.transform, font, 34);
+            subtitle.color = UiTheme.TextMuted;
+            subtitle.characterSpacing = 8f;
+
+            var subtitleRect = (RectTransform)subtitle.transform;
+            subtitleRect.anchorMin = new Vector2(0.5f, 1f);
+            subtitleRect.anchorMax = new Vector2(0.5f, 1f);
+            subtitleRect.pivot = new Vector2(0.5f, 1f);
+            subtitleRect.anchoredPosition = new Vector2(0, -224);
+            subtitleRect.sizeDelta = new Vector2(1200, 50);
 
             var buttonContainer = new GameObject("Buttons", typeof(RectTransform));
             buttonContainer.transform.SetParent(panel.transform, false);
@@ -193,9 +243,15 @@ namespace TreeFrogAdventure.EditorTools
             vlg.childForceExpandWidth = true;
             vlg.childForceExpandHeight = false;
 
-            var playButton = CreateButton("PlayButton", "Play", buttonContainer.transform, font, 360, 70);
-            var optionsButton = CreateButton("OptionsButton", "Options", buttonContainer.transform, font, 360, 70);
-            var quitButton = CreateButton("QuitButton", "Quit", buttonContainer.transform, font, 360, 70);
+            // Play is the primary action and is coloured as such; the old menu gave
+            // all three buttons the same weight, so nothing said where to start.
+            var playButton = CreateButton("PlayButton", "Play", buttonContainer.transform, font,
+                                          UiTheme.ButtonWidth, UiTheme.ButtonHeight,
+                                          UiTheme.ButtonKind.Primary);
+            var optionsButton = CreateButton("OptionsButton", "Options", buttonContainer.transform, font,
+                                             UiTheme.ButtonWidth, UiTheme.ButtonHeight);
+            var quitButton = CreateButton("QuitButton", "Quit", buttonContainer.transform, font,
+                                          UiTheme.ButtonWidth, UiTheme.ButtonHeight);
 
             UnityEventTools.AddPersistentListener(playButton.onClick, controller.OnPlayButton);
             UnityEventTools.AddPersistentListener(optionsButton.onClick, controller.OnOptionsButton);
@@ -286,7 +342,7 @@ namespace TreeFrogAdventure.EditorTools
             {
                 var rowGO = new GameObject($"World{world}Row", typeof(RectTransform));
                 rowGO.transform.SetParent(contentGO.transform, false);
-                rowGO.AddComponent<LayoutElement>().preferredHeight = 160;
+                rowGO.AddComponent<LayoutElement>().preferredHeight = 196;
 
                 var rowVlg = rowGO.AddComponent<VerticalLayoutGroup>();
                 rowVlg.spacing = 8;
@@ -296,12 +352,16 @@ namespace TreeFrogAdventure.EditorTools
                 rowVlg.childForceExpandWidth = true;
                 rowVlg.childForceExpandHeight = false;
 
-                var worldLabel = CreateText($"World {world}", rowGO.transform, font, 32);
+                var worldLabel = CreateText(
+                    $"WORLD {world}  \u2014  {LevelProgress.BiomeDisplayNames[world - 1].ToUpperInvariant()}",
+                    rowGO.transform, font, 26);
+                worldLabel.color = UiTheme.TextMuted;
+                worldLabel.characterSpacing = 6f;
                 worldLabel.gameObject.AddComponent<LayoutElement>().preferredHeight = 40;
 
                 var buttonsRowGO = new GameObject("LevelButtons", typeof(RectTransform));
                 buttonsRowGO.transform.SetParent(rowGO.transform, false);
-                buttonsRowGO.AddComponent<LayoutElement>().preferredHeight = 100;
+                buttonsRowGO.AddComponent<LayoutElement>().preferredHeight = 128;
 
                 var hlg = buttonsRowGO.AddComponent<HorizontalLayoutGroup>();
                 hlg.spacing = 20;
@@ -314,23 +374,108 @@ namespace TreeFrogAdventure.EditorTools
                 for (int levelInWorld = 1; levelInWorld <= LevelProgress.LevelsPerWorld; levelInWorld++)
                 {
                     levelIndex++;
-                    var levelButton = CreateButton($"Level{levelIndex}Button", levelIndex.ToString(), buttonsRowGO.transform, font, 90, 90);
 
+                    var levelButton = CreateButton($"Level{levelIndex}Button", string.Empty,
+                                                   buttonsRowGO.transform, font, 116, 116);
+
+                    // The number sits high so the progress row below it has somewhere
+                    // to live inside the tile.
+                    TextMeshProUGUI number = levelButton.GetComponentInChildren<TextMeshProUGUI>();
+                    number.text = levelIndex.ToString();
+                    number.fontSize = 44;
+                    number.alignment = TextAlignmentOptions.Top;
+                    ((RectTransform)number.transform).offsetMin = new Vector2(0f, 26f);
+
+                    // A tint over a completed level, so a glance at the grid says how
+                    // far you have got without reading twenty numbers.
+                    var completedTint = new GameObject("CompletedTint", typeof(RectTransform));
+                    completedTint.transform.SetParent(levelButton.transform, false);
+                    UiTheme.Stretch(completedTint);
+
+                    var tintImage = completedTint.AddComponent<Image>();
+                    tintImage.sprite = UiTheme.PillOutline;
+                    tintImage.type = Image.Type.Sliced;
+                    tintImage.color = UiTheme.Gold;
+                    tintImage.raycastTarget = false;
+                    completedTint.SetActive(false);
+
+                    // ---- progress row -------------------------------------
+                    // SaveSystem has recorded a crystal, a secret count and a best time
+                    // per level since the save system was written, and nothing ever
+                    // displayed any of it. This is where it surfaces.
+                    var progress = new GameObject("Progress", typeof(RectTransform));
+                    progress.transform.SetParent(levelButton.transform, false);
+
+                    var progressRect = (RectTransform)progress.transform;
+                    progressRect.anchorMin = new Vector2(0f, 0f);
+                    progressRect.anchorMax = new Vector2(1f, 0f);
+                    progressRect.pivot = new Vector2(0.5f, 0f);
+                    progressRect.anchoredPosition = new Vector2(0f, 26f);
+                    progressRect.sizeDelta = new Vector2(0f, 22f);
+
+                    var progressRow = progress.AddComponent<HorizontalLayoutGroup>();
+                    progressRow.spacing = 6f;
+                    progressRow.childAlignment = TextAnchor.MiddleCenter;
+                    progressRow.childControlWidth = true;
+                    progressRow.childControlHeight = true;
+                    progressRow.childForceExpandWidth = false;
+                    progressRow.childForceExpandHeight = false;
+
+                    var crystalPip = new GameObject("CrystalPip", typeof(RectTransform));
+                    crystalPip.transform.SetParent(progress.transform, false);
+
+                    var pipLayout = crystalPip.AddComponent<LayoutElement>();
+                    pipLayout.preferredWidth = 14f;
+                    pipLayout.preferredHeight = 14f;
+
+                    var pipImage = crystalPip.AddComponent<Image>();
+                    pipImage.sprite = UiTheme.Circle;
+                    pipImage.color = UiTheme.Crystal;
+                    pipImage.raycastTarget = false;
+                    crystalPip.SetActive(false);
+
+                    TextMeshProUGUI secrets = CreateText("0", progress.transform, font, 18,
+                                                         TextAlignmentOptions.Center);
+                    secrets.color = UiTheme.Accent;
+                    secrets.gameObject.name = "Secrets";
+                    secrets.gameObject.AddComponent<LayoutElement>().preferredWidth = 24f;
+                    secrets.gameObject.SetActive(false);
+
+                    TextMeshProUGUI bestTime = CreateText(string.Empty, levelButton.transform, font, 16,
+                                                          TextAlignmentOptions.Center);
+                    bestTime.color = UiTheme.TextMuted;
+                    bestTime.gameObject.name = "BestTime";
+
+                    var bestRect = (RectTransform)bestTime.transform;
+                    bestRect.anchorMin = new Vector2(0f, 0f);
+                    bestRect.anchorMax = new Vector2(1f, 0f);
+                    bestRect.pivot = new Vector2(0.5f, 0f);
+                    bestRect.anchoredPosition = new Vector2(0f, 8f);
+                    bestRect.sizeDelta = new Vector2(0f, 20f);
+                    bestTime.gameObject.SetActive(false);
+
+                    // ---- locked veil --------------------------------------
                     var lockedOverlay = new GameObject("LockedOverlay", typeof(RectTransform));
                     lockedOverlay.transform.SetParent(levelButton.transform, false);
-                    var overlayRect = (RectTransform)lockedOverlay.transform;
-                    overlayRect.anchorMin = Vector2.zero;
-                    overlayRect.anchorMax = Vector2.one;
-                    overlayRect.offsetMin = Vector2.zero;
-                    overlayRect.offsetMax = Vector2.zero;
+                    UiTheme.Stretch(lockedOverlay);
+
                     var overlayImage = lockedOverlay.AddComponent<Image>();
-                    overlayImage.color = new Color(0f, 0f, 0f, 0.75f);
+                    overlayImage.sprite = UiTheme.Pill;
+                    overlayImage.type = Image.Type.Sliced;
+                    overlayImage.color = new Color(0.02f, 0.04f, 0.03f, 0.82f);
                     overlayImage.raycastTarget = false;
+
+                    CreateText("\u2715", lockedOverlay.transform, font, 34,
+                               TextAlignmentOptions.Center).color = UiTheme.TextDisabled;
 
                     var levelButtonUI = levelButton.gameObject.AddComponent<LevelButtonUI>();
                     levelButtonUI.button = levelButton;
-                    levelButtonUI.label = levelButton.GetComponentInChildren<TextMeshProUGUI>();
+                    levelButtonUI.label = number;
                     levelButtonUI.lockedOverlay = lockedOverlay;
+                    levelButtonUI.crystalPip = crystalPip;
+                    levelButtonUI.secretsLabel = secrets;
+                    levelButtonUI.bestTimeLabel = bestTime;
+                    levelButtonUI.completedTint = tintImage;
 
                     levelButtons[levelIndex - 1] = levelButtonUI;
                 }

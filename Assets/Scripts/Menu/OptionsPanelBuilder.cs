@@ -1,4 +1,5 @@
 using TMPro;
+using TreeFrogAdventure.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -199,7 +200,10 @@ namespace TreeFrogAdventure.Menu
             bgRect.anchorMax = new Vector2(1f, 0.75f);
             bgRect.offsetMin = Vector2.zero;
             bgRect.offsetMax = Vector2.zero;
-            bgGO.AddComponent<Image>().color = new Color(1f, 1f, 1f, 0.15f);
+            var bgImage = bgGO.AddComponent<Image>();
+            bgImage.sprite = UiTheme.Pill;
+            bgImage.type = Image.Type.Sliced;
+            bgImage.color = new Color(0f, 0f, 0f, 0.45f);
 
             var fillAreaGO = new GameObject("Fill Area", typeof(RectTransform));
             fillAreaGO.transform.SetParent(go.transform, false);
@@ -217,7 +221,9 @@ namespace TreeFrogAdventure.Menu
             fillRect.offsetMin = Vector2.zero;
             fillRect.offsetMax = Vector2.zero;
             var fillImage = fillGO.AddComponent<Image>();
-            fillImage.color = new Color(0.3f, 0.75f, 0.4f, 1f);
+            fillImage.sprite = UiTheme.Pill;
+            fillImage.type = Image.Type.Sliced;
+            fillImage.color = UiTheme.Accent;
 
             var handleAreaGO = new GameObject("Handle Slide Area", typeof(RectTransform));
             handleAreaGO.transform.SetParent(go.transform, false);
@@ -232,6 +238,7 @@ namespace TreeFrogAdventure.Menu
             var handleRect = (RectTransform)handleGO.transform;
             handleRect.sizeDelta = new Vector2(20f, 20f);
             var handleImage = handleGO.AddComponent<Image>();
+            handleImage.sprite = UiTheme.Circle;
             handleImage.color = Color.white;
 
             var slider = go.AddComponent<Slider>();
@@ -259,7 +266,9 @@ namespace TreeFrogAdventure.Menu
             bgRect.offsetMin = Vector2.zero;
             bgRect.offsetMax = Vector2.zero;
             var bgImage = bgGO.AddComponent<Image>();
-            bgImage.color = new Color(1f, 1f, 1f, 0.15f);
+            bgImage.sprite = UiTheme.Panel;
+            bgImage.type = Image.Type.Sliced;
+            bgImage.color = new Color(0f, 0f, 0f, 0.45f);
 
             var checkGO = new GameObject("Checkmark", typeof(RectTransform));
             checkGO.transform.SetParent(bgGO.transform, false);
@@ -269,7 +278,9 @@ namespace TreeFrogAdventure.Menu
             checkRect.offsetMin = Vector2.zero;
             checkRect.offsetMax = Vector2.zero;
             var checkImage = checkGO.AddComponent<Image>();
-            checkImage.color = new Color(0.3f, 0.75f, 0.4f, 1f);
+            checkImage.sprite = UiTheme.Panel;
+            checkImage.type = Image.Type.Sliced;
+            checkImage.color = UiTheme.Accent;
 
             var toggle = go.AddComponent<Toggle>();
             toggle.targetGraphic = bgImage;

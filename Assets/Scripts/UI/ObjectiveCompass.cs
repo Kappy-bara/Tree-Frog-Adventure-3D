@@ -13,9 +13,10 @@ namespace TreeFrogAdventure.UI
     /// traversal across open terrain with no corridor to funnel the player. Without a
     /// heading, finding the next checkpoint is guesswork.
     ///
-    /// The objective is resolved in priority order — an active boss, then the nearest
-    /// checkpoint not yet reached, then the exit — so it always names the thing the
-    /// player should be walking towards right now.
+    /// The objective is resolved in priority order — an active boss, then whatever
+    /// ObjectiveChain says is next, then a nearest-checkpoint fallback for a level
+    /// built without a chain — so it always names the one thing the player can
+    /// currently reach.
     ///
     /// Builds its own children, matching how every other screen in this project is made.
     /// </summary>
@@ -60,8 +61,6 @@ namespace TreeFrogAdventure.UI
 
         private void Build()
         {
-            TMP_FontAsset font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
-
             var holder = new GameObject("ObjectiveCompass", typeof(RectTransform));
             holder.transform.SetParent(transform, false);
 
@@ -70,13 +69,32 @@ namespace TreeFrogAdventure.UI
             holderRect.anchorMax = new Vector2(0.5f, 1f);
             holderRect.pivot = new Vector2(0.5f, 1f);
             holderRect.anchoredPosition = new Vector2(0f, -topMargin);
-            holderRect.sizeDelta = new Vector2(barWidth, 96f);
+            holderRect.sizeDelta = new Vector2(barWidth, 104f);
 
             _group = holder.AddComponent<CanvasGroup>();
             _group.blocksRaycasts = false;
             _group.interactable = false;
 
-            // --- track --------------------------------------------------------
+            // ---- plate --------------------------------------------------------
+            // A backdrop so the heading stays readable over a bright sky or a pale
+            // cliff face; the bare bar vanished against both.
+            var plate = new GameObject("Plate", typeof(RectTransform));
+            plate.transform.SetParent(holder.transform, false);
+
+            var plateRect = (RectTransform)plate.transform;
+            plateRect.anchorMin = new Vector2(0.5f, 1f);
+            plateRect.anchorMax = new Vector2(0.5f, 1f);
+            plateRect.pivot = new Vector2(0.5f, 1f);
+            plateRect.anchoredPosition = Vector2.zero;
+            plateRect.sizeDelta = new Vector2(barWidth * 0.62f, 104f);
+
+            var plateImage = plate.AddComponent<Image>();
+            plateImage.sprite = UiTheme.Panel;
+            plateImage.type = Image.Type.Sliced;
+            plateImage.color = new Color(UiTheme.Surface.r, UiTheme.Surface.g, UiTheme.Surface.b, 0.72f);
+            plateImage.raycastTarget = false;
+
+            // ---- track --------------------------------------------------------
             var track = new GameObject("Track", typeof(RectTransform));
             track.transform.SetParent(holder.transform, false);
 
@@ -84,11 +102,13 @@ namespace TreeFrogAdventure.UI
             trackRect.anchorMin = new Vector2(0.5f, 1f);
             trackRect.anchorMax = new Vector2(0.5f, 1f);
             trackRect.pivot = new Vector2(0.5f, 1f);
-            trackRect.anchoredPosition = new Vector2(0f, 0f);
+            trackRect.anchoredPosition = new Vector2(0f, -16f);
             trackRect.sizeDelta = new Vector2(barWidth, 6f);
 
             var trackImage = track.AddComponent<Image>();
-            trackImage.color = new Color(1f, 1f, 1f, 0.18f);
+            trackImage.sprite = UiTheme.Pill;
+            trackImage.type = Image.Type.Sliced;
+            trackImage.color = new Color(1f, 1f, 1f, 0.16f);
             trackImage.raycastTarget = false;
 
             // A tick at dead centre, so "straight ahead" is readable at a glance
@@ -100,14 +120,14 @@ namespace TreeFrogAdventure.UI
             centreRect.anchorMin = new Vector2(0.5f, 1f);
             centreRect.anchorMax = new Vector2(0.5f, 1f);
             centreRect.pivot = new Vector2(0.5f, 1f);
-            centreRect.anchoredPosition = new Vector2(0f, 4f);
+            centreRect.anchoredPosition = new Vector2(0f, -10f);
             centreRect.sizeDelta = new Vector2(2f, 18f);
 
             var centreImage = centreTick.AddComponent<Image>();
-            centreImage.color = new Color(1f, 1f, 1f, 0.5f);
+            centreImage.color = new Color(1f, 1f, 1f, 0.45f);
             centreImage.raycastTarget = false;
 
-            // --- marker -------------------------------------------------------
+            // ---- marker -------------------------------------------------------
             var marker = new GameObject("Marker", typeof(RectTransform));
             marker.transform.SetParent(holder.transform, false);
 
@@ -115,57 +135,34 @@ namespace TreeFrogAdventure.UI
             _marker.anchorMin = new Vector2(0.5f, 1f);
             _marker.anchorMax = new Vector2(0.5f, 1f);
             _marker.pivot = new Vector2(0.5f, 1f);
-            _marker.anchoredPosition = new Vector2(0f, -6f);
-            _marker.sizeDelta = new Vector2(48f, 48f);
+            _marker.anchoredPosition = new Vector2(0f, -4f);
+            _marker.sizeDelta = new Vector2(44f, 44f);
 
-            // A glyph rather than a sprite: nothing in this project ships UI sprites,
-            // and a text arrow can be rotated to mean "keep turning" for free.
-            _markerIcon = MakeText(marker.transform, "Icon", "▲", 40, font,
-                                   new Color(1f, 0.85f, 0.3f));
-            _markerIcon.alignment = TextAlignmentOptions.Center;
+            // A glyph rather than a sprite, because it can be swapped to point round
+            // when the objective is behind the player.
+            _markerIcon = UiTheme.Label(marker.transform, "Icon", "\u25B2", 34, UiTheme.Gold);
+            UiTheme.Stretch(_markerIcon.gameObject);
 
-            var iconRect = (RectTransform)_markerIcon.transform;
-            iconRect.anchorMin = Vector2.zero;
-            iconRect.anchorMax = Vector2.one;
-            iconRect.offsetMin = Vector2.zero;
-            iconRect.offsetMax = Vector2.zero;
+            // ---- caption ------------------------------------------------------
+            _label = UiTheme.Label(holder.transform, "Label", string.Empty,
+                                   UiTheme.BodySize, UiTheme.TextPrimary);
 
-            // --- caption ------------------------------------------------------
-            _label = MakeText(holder.transform, "Label", "", 30, font, Color.white);
             var labelRect = (RectTransform)_label.transform;
             labelRect.anchorMin = new Vector2(0.5f, 1f);
             labelRect.anchorMax = new Vector2(0.5f, 1f);
             labelRect.pivot = new Vector2(0.5f, 1f);
-            labelRect.anchoredPosition = new Vector2(0f, -52f);
-            labelRect.sizeDelta = new Vector2(barWidth, 36f);
-            _label.alignment = TextAlignmentOptions.Center;
+            labelRect.anchoredPosition = new Vector2(0f, -46f);
+            labelRect.sizeDelta = new Vector2(barWidth, 34f);
 
-            _distance = MakeText(holder.transform, "Distance", "", 26, font,
-                                 new Color(0.75f, 0.85f, 0.8f));
+            _distance = UiTheme.Label(holder.transform, "Distance", string.Empty,
+                                      UiTheme.CaptionSize, UiTheme.TextMuted);
+
             var distanceRect = (RectTransform)_distance.transform;
             distanceRect.anchorMin = new Vector2(0.5f, 1f);
             distanceRect.anchorMax = new Vector2(0.5f, 1f);
             distanceRect.pivot = new Vector2(0.5f, 1f);
-            distanceRect.anchoredPosition = new Vector2(0f, -84f);
-            distanceRect.sizeDelta = new Vector2(barWidth, 32f);
-            _distance.alignment = TextAlignmentOptions.Center;
-        }
-
-        private static TMP_Text MakeText(Transform parent, string name, string content, int size,
-                                         TMP_FontAsset font, Color color)
-        {
-            var go = new GameObject(name, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-
-            var text = go.AddComponent<TextMeshProUGUI>();
-            if (font != null) text.font = font;
-            text.text = content;
-            text.fontSize = size;
-            text.color = color;
-            text.raycastTarget = false;
-            text.outlineWidth = 0.2f;
-            text.outlineColor = new Color32(0, 0, 0, 220);
-            return text;
+            distanceRect.anchoredPosition = new Vector2(0f, -76f);
+            distanceRect.sizeDelta = new Vector2(barWidth, 30f);
         }
 
         // --------------------------------------------------------------- update --
@@ -211,17 +208,15 @@ namespace TreeFrogAdventure.UI
             // Pinned at an edge, the up arrow would be a lie — turn it to point the
             // way round instead.
             _markerIcon.text = behind ? (bearing > 0f ? "▶" : "◀") : "▲";
-            _markerIcon.color = behind
-                ? new Color(1f, 0.6f, 0.3f)
-                : new Color(1f, 0.85f, 0.3f);
+            _markerIcon.color = behind ? UiTheme.Danger : UiTheme.Gold;
 
             _label.text = caption;
             _distance.text = $"{Mathf.RoundToInt(distance)} m";
         }
 
         /// <summary>
-        /// Priority order: the guardian you are fighting, then the nearest checkpoint
-        /// you have not reached, then the exit.
+        /// Priority order: the guardian you are fighting, then whatever the chain says
+        /// is next, then a nearest-checkpoint fallback for a level with no chain.
         /// </summary>
         private bool ResolveTarget(out Transform target, out string caption)
         {
@@ -240,6 +235,23 @@ namespace TreeFrogAdventure.UI
                     // itself may be the far side of it.
                     target = _arena.AwaitingPlayer ? _arena.transform : boss;
                     caption = _arena.AwaitingPlayer ? "Guardian's Arena" : "Defeat the Guardian";
+                    return true;
+                }
+            }
+
+            // The chain is authoritative when there is one: checkpoints are a locked
+            // sequence, so pointing at the nearest would send the player back to one
+            // they already claimed the moment they wandered.
+            ObjectiveChain chain = ObjectiveChain.Current;
+
+            if (chain != null)
+            {
+                Transform next = chain.CurrentTarget;
+
+                if (next != null)
+                {
+                    target = next;
+                    caption = chain.CurrentLabel;
                     return true;
                 }
             }

@@ -61,6 +61,50 @@ namespace TreeFrogAdventure.EditorTools
         /// </summary>
         private const int RouteWaypoints = 3;
 
+        /// <summary>How far from the map centre a route's outer points sit.</summary>
+        private const float RouteRadius = 38f;
+
+        /// <summary>
+        /// The overall shape a level's route takes.
+        ///
+        /// All five levels of a world share one map, so if every route were a straight
+        /// crossing they would read as the same level five times with the props moved.
+        /// Giving each a different shape is most of what makes them feel like different
+        /// places.
+        /// </summary>
+        private enum RouteShape
+        {
+            /// <summary>Corner to opposite corner. The straightforward one.</summary>
+            Traverse,
+
+            /// <summary>A circuit that returns near where it began.</summary>
+            Loop,
+
+            /// <summary>A wide S sweeping across the map twice.</summary>
+            Zigzag,
+
+            /// <summary>Starts at the rim and winds inward to the middle.</summary>
+            Spiral,
+        }
+
+        /// <summary>
+        /// Boss levels always Traverse: the run up to a guardian should be legible, not
+        /// a maze. The other four rotate through the shapes.
+        /// </summary>
+        private static RouteShape ShapeFor(int level)
+        {
+            var (_, levelInWorld) = LevelProgress.GetWorldAndLevel(level);
+
+            switch (levelInWorld)
+            {
+                case 1: return RouteShape.Traverse;
+                case 2: return RouteShape.Loop;
+                case 3: return RouteShape.Zigzag;
+                case 4: return RouteShape.Spiral;
+                default: return RouteShape.Traverse;
+            }
+        }
+
         // ------------------------------------------------------------- recipe --
 
         /// <summary>What a level is made of, derived purely from its number.</summary>
@@ -141,36 +185,180 @@ namespace TreeFrogAdventure.EditorTools
             "Boss_VolcanoGuardian",
         };
 
+        // ---------------------------------------------------------------- route --
+
+        /// <summary>
+        /// The path a level is laid out along, endpoints included.
+        ///
+        /// Computed before anything is placed, because the spawn marker and the exit are
+        /// simply its first and last points — deriving them separately is how they ended
+        /// up in the middle of the map while the content went somewhere else.
+        ///
+        /// Uses its own random stream so that changing content counts cannot move the
+        /// route, and changing the route cannot reshuffle the content.
+        /// </summary>
+        public static List<Vector3> PlanRoute(int level, Scene envScene)
+        {
+            Random.InitState(level * 7919);
+
+            var (world, levelInWorld) = LevelProgress.GetWorldAndLevel(level);
+
+            float baseAngle = ((levelInWorld - 1) * 72f + (world - 1) * 23f) * Mathf.Deg2Rad;
+            List<Vector2> flat = Outline(ShapeFor(level), baseAngle);
+
+            var route = new List<Vector3>(flat.Count);
+            foreach (Vector2 xz in flat) route.Add(SolidGroundNear(xz, envScene, 0f));
+
+            return route;
+        }
+
+        /// <summary>The XZ shape of a route, before it is dropped onto the terrain.</summary>
+        private static List<Vector2> Outline(RouteShape shape, float baseAngle)
+        {
+            var points = new List<Vector2>();
+
+            var axis = new Vector2(Mathf.Cos(baseAngle), Mathf.Sin(baseAngle));
+            var side = new Vector2(-axis.y, axis.x);
+
+            switch (shape)
+            {
+                case RouteShape.Loop:
+                {
+                    // Five sixths of a circle: the exit ends up near the spawn without
+                    // sitting on top of it, so the level reads as a round trip.
+                    const int steps = 6;
+
+                    for (int i = 0; i <= steps; i++)
+                    {
+                        float angle = baseAngle + i / (float)steps * Mathf.PI * 1.7f;
+                        float radius = RouteRadius * Mathf.Lerp(0.85f, 1f, Random.value);
+
+                        points.Add(MapCenter + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius);
+                    }
+                    break;
+                }
+
+                case RouteShape.Zigzag:
+                {
+                    // Crosses the full width of the map three times on the way over.
+                    const int steps = 6;
+
+                    for (int i = 0; i <= steps; i++)
+                    {
+                        float along = Mathf.Lerp(-RouteRadius, RouteRadius, i / (float)steps);
+                        float swing = (i % 2 == 0 ? 1f : -1f) * Random.Range(24f, 34f);
+
+                        // Ends sit on the centre line so the spawn and exit are not
+                        // jammed into a corner.
+                        if (i == 0 || i == steps) swing = 0f;
+
+                        points.Add(MapCenter + axis * along + side * swing);
+                    }
+                    break;
+                }
+
+                case RouteShape.Spiral:
+                {
+                    // Winds from the rim to the middle: the exit is at the heart of the
+                    // map and everything on the way in is a wider ring around it.
+                    const int steps = 7;
+
+                    for (int i = 0; i <= steps; i++)
+                    {
+                        float t = i / (float)steps;
+                        float angle = baseAngle + t * Mathf.PI * 2.2f;
+                        float radius = Mathf.Lerp(RouteRadius, 6f, t);
+
+                        points.Add(MapCenter + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius);
+                    }
+                    break;
+                }
+
+                default:
+                {
+                    // Traverse: opposite rims, bending off the straight line so the
+                    // crossing is not a corridor.
+                    Vector2 a = MapCenter - axis * RouteRadius;
+                    Vector2 b = MapCenter + axis * RouteRadius;
+
+                    points.Add(a);
+
+                    for (int i = 1; i <= RouteWaypoints; i++)
+                    {
+                        float t = i / (float)(RouteWaypoints + 1);
+                        float swing = (i % 2 == 0 ? -1f : 1f) * Random.Range(18f, 30f);
+
+                        points.Add(Vector2.Lerp(a, b, t) + side * swing);
+                    }
+
+                    points.Add(b);
+                    break;
+                }
+            }
+
+            return points;
+        }
+
+        /// <summary>
+        /// Grounds a point, spiralling outward if the first pick is in water or off the
+        /// playable tile. A route point in a lake would put a checkpoint — and possibly
+        /// the level's exit — somewhere the player cannot stand.
+        /// </summary>
+        private static Vector3 SolidGroundNear(Vector2 xz, Scene envScene, float heightOffset)
+        {
+            for (int attempt = 0; attempt < 40; attempt++)
+            {
+                // Golden-angle spiral: samples spread evenly rather than clustering
+                // along one ray the way a fixed angular step does.
+                float radius = attempt * 1.7f;
+                float angle = attempt * 2.39996f;
+
+                var candidate = new Vector2(
+                    Mathf.Clamp(xz.x + Mathf.Cos(angle) * radius,
+                                MapCenter.x - PlayableHalfExtent, MapCenter.x + PlayableHalfExtent),
+                    Mathf.Clamp(xz.y + Mathf.Sin(angle) * radius,
+                                MapCenter.y - PlayableHalfExtent, MapCenter.y + PlayableHalfExtent));
+
+                if (TryGround(candidate, envScene, out Vector3 ground))
+                {
+                    return ground + Vector3.up * heightOffset;
+                }
+            }
+
+            return GroundAt(xz, envScene, heightOffset);
+        }
+
         // ------------------------------------------------------------ populate --
 
         public static string Populate(int level, Scene levelScene, Scene envScene,
-                                      Transform spawn, Transform goal)
+                                      Transform spawn, Transform goal, List<Vector3> route)
         {
-            // Seeded from the level number: re-running must reproduce the same layout,
-            // not reshuffle a level that has already been tuned around.
-            Random.InitState(level * 7919);
+            // A separate stream from PlanRoute, so tuning content counts cannot move the
+            // route and vice versa.
+            Random.InitState(level * 7919 + 17);
 
             Recipe recipe = RecipeFor(level);
 
             GameObject root = ResetContentRoot(levelScene);
 
-            Vector3 from = spawn != null ? spawn.position : Vector3.zero;
-            Vector3 to = goal != null ? goal.position : from + Vector3.forward * 30f;
-
-            // A winding polyline rather than the straight line between the endpoints.
-            // Content used to be scattered along that straight line with a few metres
-            // of lateral spread, which turned a 96 m map into a narrow corridor.
-            List<Vector3> route = BuildRoute(from, to, envScene);
-
             var counts = new List<string>();
             var shortfalls = new List<string>();
 
-            int cp = PlaceCheckpoints(root, recipe, envScene, route);
-            int en = PlaceEnemies(root, recipe, level, envScene, route);
-            int tr = PlaceTraps(root, recipe, level, envScene, route);
+            List<Checkpoint> chain = PlaceCheckpoints(root, recipe, envScene, route);
+
+            // Each checkpoint is the centre of an area to explore, and the exit is the
+            // last one. Scattering content evenly along the route instead produced a
+            // uniform smear; clustering it gives the level places rather than a corridor.
+            var hubs = new List<Vector3>();
+            foreach (Checkpoint checkpoint in chain) hubs.Add(checkpoint.transform.position);
+            hubs.Add(RoutePosition(route, 1f));
+
+            int cp = chain.Count;
+            int en = PlaceEnemies(root, recipe, level, envScene, hubs);
+            int tr = PlaceTraps(root, recipe, level, envScene, hubs);
             int co = PlaceCoins(root, recipe, envScene, route);
-            int pu = PlacePowerUps(root, recipe, level, envScene, route);
-            int se = PlaceSecrets(root, recipe, envScene, route, includeCrystal: !recipe.Boss);
+            int pu = PlacePowerUps(root, recipe, level, envScene, hubs);
+            int se = PlaceSecrets(root, recipe, envScene, hubs, includeCrystal: !recipe.Boss);
 
             counts.Add($"{cp}cp");
             counts.Add($"{en}e");
@@ -188,9 +376,20 @@ namespace TreeFrogAdventure.EditorTools
             Shortfall(shortfalls, "secrets", se, recipe.Secrets);
             if (co == 0) shortfalls.Add("coins 0");
 
+            GameObject arena = recipe.Boss ? PlaceBoss(root, level, envScene, goal) : null;
             string bossNote = recipe.Boss
-                ? PlaceBoss(root, level, envScene, goal)
+                ? (arena != null ? $"boss={arena.name}" : "BOSS MISSING")
                 : string.Empty;
+
+            // The exit is revealed by the chain on an ordinary level. On a guardian
+            // level the chain reveals the ARENA instead, and the arena keeps ownership
+            // of the exit — it opens once the guardian falls.
+            GameObject finalObjective = recipe.Boss
+                ? arena
+                : (goal != null ? goal.gameObject : null);
+
+            WireChain(root, chain, finalObjective, recipe.Boss,
+                      lockedAtStart: recipe.Boss && goal != null ? goal.gameObject : null);
 
             // Every level must hold exactly one Nature Crystal — it is the story
             // collectible and the save records it per level. On boss levels the arena
@@ -209,6 +408,35 @@ namespace TreeFrogAdventure.EditorTools
                    + (string.IsNullOrEmpty(bossNote) ? string.Empty : " " + bossNote)
                    + (string.IsNullOrEmpty(crystalNote) ? string.Empty : " " + crystalNote)
                    + (shortfalls.Count > 0 ? $"  SHORT[{string.Join(", ", shortfalls)}]" : string.Empty);
+        }
+
+        /// <summary>
+        /// Hands the ordered checkpoints and the final objective to an ObjectiveChain,
+        /// which is what gates them at runtime.
+        /// </summary>
+        private static void WireChain(GameObject root, List<Checkpoint> chain,
+                                      GameObject finalObjective, bool boss,
+                                      GameObject lockedAtStart)
+        {
+            var component = root.AddComponent<ObjectiveChain>();
+
+            var so = new SerializedObject(component);
+
+            SerializedProperty array = so.FindProperty("checkpoints");
+            array.arraySize = chain.Count;
+            for (int i = 0; i < chain.Count; i++)
+            {
+                array.GetArrayElementAtIndex(i).objectReferenceValue = chain[i];
+            }
+
+            so.FindProperty("finalObjective").objectReferenceValue = finalObjective;
+            so.FindProperty("finalObjectiveLabel").stringValue = boss ? "Guardian's Arena" : "Level Exit";
+
+            SerializedProperty locked = so.FindProperty("lockedAtStart");
+            locked.arraySize = lockedAtStart != null ? 1 : 0;
+            if (lockedAtStart != null) locked.GetArrayElementAtIndex(0).objectReferenceValue = lockedAtStart;
+
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void Shortfall(List<string> into, string label, int placed, int wanted)
@@ -277,32 +505,41 @@ namespace TreeFrogAdventure.EditorTools
 
         // ------------------------------------------------------------- placing --
 
-        private static int PlaceCheckpoints(GameObject root, Recipe recipe, Scene env,
-                                            List<Vector3> route)
+        /// <summary>
+        /// Places the checkpoints in route order and returns them, because the order is
+        /// the level structure now — each one unlocks the next.
+        /// </summary>
+        private static List<Checkpoint> PlaceCheckpoints(GameObject root, Recipe recipe, Scene env,
+                                                         List<Vector3> route)
         {
+            var placed = new List<Checkpoint>();
+
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CheckpointPrefab);
-            if (prefab == null) return 0;
+            if (prefab == null) return placed;
 
             var group = Group(root, "Checkpoints");
-            int placed = 0;
 
             for (int i = 1; i <= recipe.Checkpoints; i++)
             {
-                float t = i / (float)(recipe.Checkpoints + 1);
+                // Spread across the route rather than crowding the middle: the last one
+                // sits close enough to the end that reaching it opens the exit nearby.
+                float t = Mathf.Lerp(0.22f, 0.88f, (i - 1) / Mathf.Max(1f, recipe.Checkpoints - 1f));
 
                 // Directly on the path, not scattered: a checkpoint the player can walk
                 // past without touching is worse than none at all.
                 if (!TryPoint(route, t, 0f, env, out Vector3 point)) continue;
 
-                Instantiate(prefab, group, point, $"Checkpoint_{i}");
-                placed++;
+                GameObject instance = Instantiate(prefab, group, point, $"Checkpoint_{i}");
+
+                var checkpoint = instance.GetComponent<Checkpoint>();
+                if (checkpoint != null) placed.Add(checkpoint);
             }
 
             return placed;
         }
 
         private static int PlaceEnemies(GameObject root, Recipe recipe, int level, Scene env,
-                                        List<Vector3> route)
+                                        List<Vector3> hubs)
         {
             var group = Group(root, "Enemies");
             int placed = 0;
@@ -315,9 +552,13 @@ namespace TreeFrogAdventure.EditorTools
                 var prefab = LoadEnemy(name);
                 if (prefab == null) continue;
 
-                // Never within the first tenth of the path: spawning on top of the
-                // player is a hit they cannot avoid.
-                if (!TryPlace(route, env, 0.12f, 0.96f, -16f, 16f, out Vector3 point)) continue;
+                // Round-robin so every area is defended, rather than random hubs
+                // leaving one stretch empty and another swarming.
+                Vector3 hub = hubs[i % hubs.Count];
+
+                // The inner radius keeps them off the checkpoint itself: respawning
+                // into a waiting enemy is a hit the player cannot avoid.
+                if (!TryPlaceNear(hub, env, 6f, 20f, out Vector3 point)) continue;
 
                 GameObject instance = Instantiate(prefab, group, point + Vector3.up * 0.1f, null);
                 instance.transform.rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
@@ -328,7 +569,7 @@ namespace TreeFrogAdventure.EditorTools
         }
 
         private static int PlaceTraps(GameObject root, Recipe recipe, int level, Scene env,
-                                      List<Vector3> route)
+                                      List<Vector3> hubs)
         {
             var group = Group(root, "Traps");
             int placed = 0;
@@ -341,7 +582,8 @@ namespace TreeFrogAdventure.EditorTools
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{HazardFolder}/{name}.prefab");
                 if (prefab == null) continue;
 
-                if (!TryPlace(route, env, 0.15f, 0.92f, -10f, 10f, out Vector3 point)) continue;
+                Vector3 hub = hubs[i % hubs.Count];
+                if (!TryPlaceNear(hub, env, 5f, 16f, out Vector3 point)) continue;
 
                 // Platforms hang above the ground; spikes and lava sit on it.
                 bool airborne = name.Contains("Platform");
@@ -391,7 +633,7 @@ namespace TreeFrogAdventure.EditorTools
         }
 
         private static int PlacePowerUps(GameObject root, Recipe recipe, int level, Scene env,
-                                         List<Vector3> route)
+                                         List<Vector3> hubs)
         {
             var group = Group(root, "PowerUps");
             int placed = 0;
@@ -404,7 +646,10 @@ namespace TreeFrogAdventure.EditorTools
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PickupFolder}/{name}.prefab");
                 if (prefab == null) continue;
 
-                if (!TryPlace(route, env, 0.2f, 0.9f, -14f, 14f, out Vector3 point)) continue;
+                // Deliberately at the far edge of an area: a power-up should be
+                // something you went and got, not something on the way past.
+                Vector3 hub = hubs[(i + 1) % hubs.Count];
+                if (!TryPlaceNear(hub, env, 10f, 24f, out Vector3 point)) continue;
 
                 Instantiate(prefab, group, point + Vector3.up * 1f, null);
                 placed++;
@@ -419,7 +664,7 @@ namespace TreeFrogAdventure.EditorTools
         /// secrets matter rather than being optional decoration.
         /// </summary>
         private static int PlaceSecrets(GameObject root, Recipe recipe, Scene env,
-                                        List<Vector3> route, bool includeCrystal)
+                                        List<Vector3> hubs, bool includeCrystal)
         {
             var group = Group(root, "Secrets");
             var coin = AssetDatabase.LoadAssetAtPath<GameObject>($"{PickupFolder}/Pickup_Coin.prefab");
@@ -429,11 +674,14 @@ namespace TreeFrogAdventure.EditorTools
 
             for (int i = 0; i < recipe.Secrets; i++)
             {
-                // Well off the path — a secret found by walking the critical route is
-                // not a secret. Falls back to a tighter offset rather than being
-                // dropped, because a missing secret can mean a missing Nature Crystal.
-                if (!TryPlace(route, env, 0.15f, 0.9f, 22f, 38f, out Vector3 point)
-                    && !TryPlace(route, env, 0.15f, 0.9f, 10f, 22f, out point))
+                // On the outskirts of an area — far enough that walking the route
+                // will not stumble into it, near enough that a player who explores the
+                // area will. Falls back to a tighter ring rather than being dropped,
+                // because a missing secret can mean a missing Nature Crystal.
+                Vector3 hub = hubs[i % hubs.Count];
+
+                if (!TryPlaceNear(hub, env, 22f, 36f, out Vector3 point)
+                    && !TryPlaceNear(hub, env, 12f, 22f, out point))
                 {
                     continue;
                 }
@@ -509,25 +757,37 @@ namespace TreeFrogAdventure.EditorTools
 
         // ---------------------------------------------------------------- boss --
 
-        private static string PlaceBoss(GameObject root, int level, Scene env, Transform goal)
+        /// <summary>
+        /// Builds the guardian and its arena, returning the arena so ObjectiveChain can
+        /// keep it hidden until the last checkpoint is claimed.
+        /// </summary>
+        private static GameObject PlaceBoss(GameObject root, int level, Scene env, Transform goal)
         {
             var (world, _) = LevelProgress.GetWorldAndLevel(level);
             string prefabName = BossPrefabByWorld[Mathf.Clamp(world - 1, 0, BossPrefabByWorld.Length - 1)];
 
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{BossFolder}/{prefabName}.prefab");
-            if (prefab == null) return $"BOSS MISSING ({prefabName})";
+            if (prefab == null)
+            {
+                Debug.LogError($"[LevelPopulator] Missing boss prefab: {prefabName}");
+                return null;
+            }
 
             var group = Group(root, "Boss");
 
             Vector3 centre = goal != null ? goal.position : Vector3.zero;
             centre = GroundAt(new Vector2(centre.x, centre.z), env, 0f);
 
-            GameObject boss = Instantiate(prefab, group, centre + Vector3.up * 1f, null);
-
             // ---- arena trigger ----------------------------------------------
             var arena = new GameObject("BossArena");
             arena.transform.SetParent(group.transform, false);
             arena.transform.position = centre;
+
+            // The guardian is a CHILD of the arena, so ObjectiveChain hiding the arena
+            // hides the guardian with it. Left as a sibling it would stand there live
+            // from the first frame, and a player with flies could kill it before the
+            // arena ever existed to hand out the crystal.
+            GameObject boss = Instantiate(prefab, arena, centre + Vector3.up * 1f, null);
 
             var trigger = arena.AddComponent<BoxCollider>();
             trigger.isTrigger = true;
@@ -549,7 +809,8 @@ namespace TreeFrogAdventure.EditorTools
             so.FindProperty("levelGoal").objectReferenceValue = goal != null ? goal.gameObject : null;
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            return $"boss={prefabName.Replace("Boss_", "")}";
+            arena.name = prefabName.Replace("Boss_", "") + "Arena";
+            return arena;
         }
 
         /// <summary>
@@ -615,67 +876,26 @@ namespace TreeFrogAdventure.EditorTools
         // -------------------------------------------------------------- helpers --
 
         /// <summary>
-        /// The path the level is built along: spawn, a few waypoints swung alternately
-        /// off the straight line, then the exit.
-        ///
-        /// The swing is what makes a level feel like a journey across the map. A
-        /// straight run between two points on opposite sides is long but featureless,
-        /// and it only ever visits one narrow band of terrain.
+        /// Picks a point in a ring around an area's centre. This is what turns the
+        /// level from a smear of props along a line into a handful of places, each with
+        /// something in it worth walking around.
         /// </summary>
-        private static List<Vector3> BuildRoute(Vector3 from, Vector3 to, Scene env)
-        {
-            var route = new List<Vector3> { from };
-
-            Vector2 a = new Vector2(from.x, from.z);
-            Vector2 b = new Vector2(to.x, to.z);
-
-            Vector2 along = b - a;
-            if (along.sqrMagnitude < 1e-4f) along = Vector2.up;
-
-            Vector2 dir = along.normalized;
-            Vector2 side = new Vector2(-dir.y, dir.x);
-
-            for (int i = 1; i <= RouteWaypoints; i++)
-            {
-                float t = i / (float)(RouteWaypoints + 1);
-                float swing = (i % 2 == 0 ? -1f : 1f) * Random.Range(16f, 30f);
-
-                // Pull the swing in until the waypoint is somewhere the player can
-                // actually stand, rather than dropping the route into a lake.
-                Vector3 point = default;
-                bool found = false;
-
-                for (int attempt = 0; attempt < 6 && !found; attempt++)
-                {
-                    float scale = 1f - attempt * 0.18f;
-                    found = TryGround(Vector2.Lerp(a, b, t) + side * (swing * scale), env, out point);
-                }
-
-                route.Add(found ? point : GroundAt(Vector2.Lerp(a, b, t), env, 0f));
-            }
-
-            route.Add(to);
-            return route;
-        }
-
-        /// <summary>
-        /// Repeatedly picks a point in the given band until one lands somewhere valid.
-        /// Without retrying, every rejection silently cost the level one object.
-        /// </summary>
-        private static bool TryPlace(List<Vector3> route, Scene env,
-                                     float tMin, float tMax, float latMin, float latMax,
-                                     out Vector3 result)
+        private static bool TryPlaceNear(Vector3 centre, Scene env, float minRadius, float maxRadius,
+                                         out Vector3 result)
         {
             for (int attempt = 0; attempt < PlacementAttempts; attempt++)
             {
-                float t = Random.Range(tMin, tMax);
-                float lateral = Random.Range(latMin, latMax);
+                float angle = Random.Range(0f, Mathf.PI * 2f);
 
-                // Half the attempts mirror to the other side, so a level whose route
-                // hugs one edge of the map still uses the space on the other.
-                if (attempt % 2 == 1) lateral = -lateral;
+                // sqrt keeps the distribution even by area; without it everything
+                // bunches towards the inner edge of the ring.
+                float t = Mathf.Sqrt(Random.value);
+                float radius = Mathf.Lerp(minRadius, maxRadius, t);
 
-                if (TryPoint(route, t, lateral, env, out result)) return true;
+                var xz = new Vector2(centre.x + Mathf.Cos(angle) * radius,
+                                     centre.z + Mathf.Sin(angle) * radius);
+
+                if (TryGround(xz, env, out result)) return true;
             }
 
             result = default;
