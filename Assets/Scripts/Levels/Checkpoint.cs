@@ -28,17 +28,21 @@ namespace TreeFrogAdventure.Levels
         [Tooltip("Also top the player's health back up on activation.")]
         [SerializeField] private bool healOnActivate = true;
 
-        /// <summary>The checkpoint currently owning the respawn point, so the previous
-        /// one can switch its visual back off.</summary>
-        private static Checkpoint _active;
-
-        private bool _isActive;
-
         /// <summary>
-        /// True once the player has passed through. Read by ObjectiveCompass so the
-        /// marker moves on to the next objective instead of pointing backwards.
+        /// Claiming is ONE-WAY. Once reached, a checkpoint is reached for the rest of
+        /// the level and can never be re-triggered.
+        ///
+        /// This used to be a single flag that also tracked which checkpoint currently
+        /// owned the respawn point, and a static pointer to that one cleared the flag on
+        /// whichever it replaced. So reaching B un-claimed A: walking back re-triggered
+        /// A, which un-claimed B, and the compass — which asks for the nearest
+        /// un-reached checkpoint — sent the player back and forth between the two
+        /// forever.
         /// </summary>
-        public bool IsActivated => _isActive;
+        private bool _claimed;
+
+        /// <summary>True once the player has passed through. Never goes back to false.</summary>
+        public bool IsActivated => _claimed;
 
         /// <summary>Where the compass should point. Never null once awake.</summary>
         public Transform Marker => respawnPoint != null ? respawnPoint : transform;
@@ -59,17 +63,12 @@ namespace TreeFrogAdventure.Levels
         private void Awake()
         {
             if (respawnPoint == null) respawnPoint = transform;
-            SetVisual(false);
-        }
-
-        private void OnDestroy()
-        {
-            if (_active == this) _active = null;
+            RefreshVisual();
         }
 
         private void OnTriggerEnter(Collider other)
         {
-            if (_isActive) return;
+            if (_claimed) return;
 
             var player = other.GetComponentInParent<PlayerHealth>();
             if (player == null && !other.CompareTag("Player")) return;
@@ -79,11 +78,11 @@ namespace TreeFrogAdventure.Levels
 
         private void Activate(PlayerHealth player)
         {
-            if (_active != null && _active != this) _active.SetVisual(false);
+            _claimed = true;
+            RefreshVisual();
 
-            _active = this;
-            SetVisual(true);
-
+            // Last one claimed wins the respawn. Earlier checkpoints stay lit but are
+            // inert, so they cannot steal it back.
             GameSession.SetCheckpoint(respawnPoint.position, respawnPoint.rotation);
 
             OnActivated?.Invoke(this);
@@ -102,11 +101,14 @@ namespace TreeFrogAdventure.Levels
             }
         }
 
-        private void SetVisual(bool active)
+        /// <summary>
+        /// Lit once claimed, and it stays lit — the trail of claimed checkpoints behind
+        /// the player is what shows how far through the level they are.
+        /// </summary>
+        private void RefreshVisual()
         {
-            _isActive = active;
-            if (activeVisual != null) activeVisual.SetActive(active);
-            if (inactiveVisual != null) inactiveVisual.SetActive(!active);
+            if (activeVisual != null) activeVisual.SetActive(_claimed);
+            if (inactiveVisual != null) inactiveVisual.SetActive(!_claimed);
         }
 
         private void OnDrawGizmos()
